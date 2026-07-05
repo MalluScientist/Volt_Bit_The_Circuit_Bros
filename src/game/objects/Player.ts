@@ -39,7 +39,15 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.setDragX(1700);
     this.setMaxVelocity(390, 760);
     this.cursors = scene.input.keyboard!.createCursorKeys();
-    this.keys = scene.input.keyboard!.addKeys('A,D,W,J,K,R,ESC') as typeof this.keys;
+    this.keys = {
+      a: scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.A),
+      d: scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.D),
+      w: scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.W),
+      j: scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.J),
+      k: scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.K),
+      r: scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.R),
+      esc: scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.ESC)
+    };
     this.attackBox = scene.add.rectangle(x, y, 34, 24, 0x45c4ff, 0.25).setVisible(false);
     scene.physics.add.existing(this.attackBox);
     (this.attackBox.body as Phaser.Physics.Arcade.Body).setAllowGravity(false).setEnable(false);
