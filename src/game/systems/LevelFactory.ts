@@ -20,6 +20,17 @@ export function makeLevel(id: number): LevelSpec {
     { x: 3780, y: 498, w: 800, h: 48 }
   ];
   if (id === 1) {
+    const level1Platforms = [
+      { x: 360, y: 500, w: 720, h: 48 },
+      { x: 900, y: 465, w: 320, h: 30 },
+      { x: 1250, y: 430, w: 300, h: 28 },
+      { x: 1620, y: 455, w: 360, h: 36 },
+      { x: 2020, y: 430, w: 340, h: 30 },
+      { x: 2420, y: 455, w: 360, h: 36 },
+      { x: 2860, y: 440, w: 360, h: 30 },
+      { x: 3300, y: 430, w: 340, h: 30 },
+      { x: 3860, y: 498, w: 880, h: 48 }
+    ];
     return {
       id,
       theme,
@@ -28,14 +39,14 @@ export function makeLevel(id: number): LevelSpec {
       checkpoint: new Phaser.Math.Vector2(2080, 320),
       bossArenaX: 3520,
       platforms: [
-        ...basePlatforms,
-        { x: 720, y: 350, w: 130, h: 20, kind: 'blink' },
-        { x: 1140, y: 305, w: 120, h: 20, kind: 'blink' },
-        { x: 1510, y: 270, w: 110, h: 20, kind: 'solid' },
-        { x: 1980, y: 310, w: 160, h: 20, kind: 'blink' },
-        { x: 2460, y: 305, w: 150, h: 20, kind: 'solid' },
-        { x: 2880, y: 315, w: 150, h: 20, kind: 'blink' },
-        { x: 3330, y: 360, w: 180, h: 20 }
+        ...level1Platforms,
+        { x: 720, y: 405, w: 150, h: 20, kind: 'blink' },
+        { x: 1120, y: 380, w: 150, h: 20, kind: 'blink' },
+        { x: 1510, y: 350, w: 140, h: 20, kind: 'solid' },
+        { x: 1980, y: 365, w: 170, h: 20, kind: 'blink' },
+        { x: 2460, y: 365, w: 160, h: 20, kind: 'solid' },
+        { x: 2880, y: 370, w: 170, h: 20, kind: 'blink' },
+        { x: 3330, y: 375, w: 190, h: 20 }
       ],
       enemies: [
         { type: 'led', x: 780, y: 410 },
