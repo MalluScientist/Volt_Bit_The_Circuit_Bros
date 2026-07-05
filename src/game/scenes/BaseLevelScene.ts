@@ -1,0 +1,283 @@
+import Phaser from 'phaser';
+import { GAME_HEIGHT, GAME_WIDTH } from '../constants';
+import { AudioSystem } from '../systems/AudioSystem';
+import { makeLevel } from '../systems/LevelFactory';
+import { SaveSystem } from '../systems/SaveSystem';
+import { burst, floatingText } from '../systems/ParticleSystem';
+import { HUD } from '../ui/HUD';
+import { DialogToast } from '../ui/DialogToast';
+import { Platform } from '../objects/Platform';
+import { Player } from '../objects/Player';
+import { AngryLED } from '../objects/AngryLED';
+import { SparkSlime } from '../objects/SparkSlime';
+import { BatteryBat } from '../objects/BatteryBat';
+import { GlitchBug } from '../objects/GlitchBug';
+import { Enemy } from '../objects/Enemy';
+import { Collectible } from '../objects/Collectible';
+import { Hazard } from '../objects/Hazard';
+import { Checkpoint } from '../objects/Checkpoint';
+import { Boss } from '../objects/Boss';
+import { DiscoDiode } from '../objects/DiscoDiode';
+import { CaptainOvercharge } from '../objects/CaptainOvercharge';
+import { LooseConnection } from '../objects/LooseConnection';
+import { LevelSpec } from '../types';
+
+export abstract class BaseLevelScene extends Phaser.Scene {
+  protected abstract levelId: number;
+  protected spec!: LevelSpec;
+  protected player!: Player;
+  protected audio = new AudioSystem();
+  protected hud!: HUD;
+  protected toast!: DialogToast;
+  protected platforms: Platform[] = [];
+  protected enemies!: Phaser.Physics.Arcade.Group;
+  protected collectibles!: Phaser.Physics.Arcade.Group;
+  protected hazards: Hazard[] = [];
+  protected checkpoint!: Checkpoint;
+  protected boss?: Boss;
+  protected bossStarted = false;
+  protected chips = 0;
+  private bossBar?: Phaser.GameObjects.Rectangle;
+  private bossBarBack?: Phaser.GameObjects.Rectangle;
+  private pausePanel?: Phaser.GameObjects.Container;
+  private paused = false;
+  private lastBossHitAt = 0;
+
+  create(): void {
+    this.spec = makeLevel(this.levelId);
+    this.physics.world.setBounds(0, 0, this.spec.width, GAME_HEIGHT + 220);
+    this.cameras.main.setBounds(0, 0, this.spec.width, GAME_HEIGHT);
+    this.cameras.main.setBackgroundColor(this.spec.theme.sky);
+    this.drawBackground();
+    this.enemies = this.physics.add.group();
+    this.collectibles = this.physics.add.group();
+    this.platforms = this.spec.platforms.map((p) => new Platform(this, p, this.spec.theme.ground));
+    this.hazards = this.spec.hazards.map((h) => new Hazard(this, h.x, h.y, h.w, h.h, h.type));
+    this.checkpoint = new Checkpoint(this, this.spec.checkpoint.x, this.spec.checkpoint.y);
+    this.player = new Player(this, this.spec.start.x, this.spec.start.y, this.audio);
+    this.player.checkpoint.copy(this.spec.start);
+    this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
+    this.hud = new HUD(this);
+    this.toast = new DialogToast(this);
+    this.toast.show(this.levelId === 1 ? 'Warning: excessive confidence.' : this.levelId === 2 ? 'The manual said not to do that.' : 'Loose wires, loose plans.');
+    this.spawnEnemies();
+    this.spawnCollectibles();
+    this.wirePhysics();
+    this.input.keyboard!.on('keydown-ESC', () => this.togglePause());
+    this.input.keyboard!.on('keydown-R', () => this.player.restartAtCheckpoint());
+  }
+
+  update(time: number): void {
+    if (this.paused) return;
+    this.platforms.forEach((platform) => platform.tick(time));
+    this.enemies.children.each((child) => {
+      if (child.active) (child as Enemy).tick(time, this.player);
+      return true;
+    });
+    if (!this.bossStarted && this.player.x > this.spec.bossArenaX) this.startBoss();
+    if (this.boss?.active) {
+      this.boss.tick(time, this.player);
+      this.updateBossBar();
+    }
+    this.handleWorldHazards();
+    if (this.player.y > GAME_HEIGHT + 130) this.killPlayer();
+    this.hud.update({
+      health: this.player.health,
+      maxHealth: this.player.maxHealth,
+      dashRatio: this.player.dashEnergy,
+      coins: this.player.coins,
+      score: this.player.score,
+      levelName: this.spec.theme.name,
+      powerUp: this.player.powerUp,
+      chips: this.chips
+    });
+  }
+
+  private drawBackground(): void {
+    const g = this.add.graphics().setDepth(-10);
+    g.lineStyle(1, this.spec.theme.ground, 0.18);
+    for (let x = 0; x < this.spec.width; x += 80) g.lineBetween(x, 0, x, GAME_HEIGHT);
+    for (let y = 40; y < GAME_HEIGHT; y += 80) g.lineBetween(0, y, this.spec.width, y);
+    g.lineStyle(4, this.spec.theme.accent, 0.45);
+    for (let x = 0; x < this.spec.width; x += 360) {
+      g.lineBetween(x, 470, x + 200, 330);
+      g.strokeCircle(x + 220, 318, 9);
+    }
+    for (let x = 280; x < this.spec.width; x += 520) {
+      this.add.rectangle(x, 110 + (x % 160), 26, 34, this.spec.theme.accent, 0.7).setDepth(-5);
+    }
+  }
+
+  private spawnEnemies(): void {
+    this.spec.enemies.forEach((s) => {
+      const enemy = s.type === 'led' ? new AngryLED(this, s.x, s.y) : s.type === 'slime' ? new SparkSlime(this, s.x, s.y) : s.type === 'bat' ? new BatteryBat(this, s.x, s.y) : new GlitchBug(this, s.x, s.y);
+      this.enemies.add(enemy);
+    });
+  }
+
+  private spawnCollectibles(): void {
+    this.spec.collectibles.forEach((s) => this.collectibles.add(new Collectible(this, s.x, s.y, s.type, s.id, s.power)));
+  }
+
+  private wirePhysics(): void {
+    this.platforms.forEach((platform) => {
+      this.physics.add.collider(this.player, platform, () => this.platformTouch(platform));
+      this.physics.add.collider(this.enemies, platform);
+    });
+    this.physics.add.overlap(this.player, this.collectibles, (_, item) => this.collect(item as Collectible));
+    this.physics.add.overlap(this.player, this.hazards, (_, hazard) => this.hitHazard(hazard as Hazard));
+    this.physics.add.overlap(this.player, this.checkpoint, () => {
+      this.checkpoint.activate();
+      this.player.checkpoint.copy(this.spec.checkpoint);
+      this.toast.show('Continuity checkpoint restored.');
+    });
+    this.physics.add.overlap(this.player, this.enemies, (_, enemy) => this.touchEnemy(enemy as Enemy));
+    this.physics.add.overlap(this.player.attackBox, this.enemies, (_, enemy) => this.attackEnemy(enemy as Enemy));
+  }
+
+  private platformTouch(platform: Platform): void {
+    const body = this.player.body as Phaser.Physics.Arcade.Body;
+    if (!body.blocked.down && !body.touching.down) return;
+    if (platform.kind === 'boost') {
+      body.setVelocityX(Math.sign(body.velocity.x || 1) * 520);
+      burst(this, this.player.x, this.player.y + 18, 0x45c4ff, 8);
+    }
+    if (platform.kind === 'bounce') {
+      body.setVelocityY(-680);
+      this.audio.beep(760, 0.08, 'triangle', 0.04);
+    }
+  }
+
+  private collect(item: Collectible): void {
+    this.audio.pickup();
+    burst(this, item.x, item.y, 0xffe05d, 8);
+    if (item.collectType === 'coin') {
+      this.player.coins += 1;
+      this.player.score += 25;
+    } else if (item.collectType === 'cell') {
+      this.player.heal(1);
+      this.player.score += 75;
+    } else if (item.collectType === 'chip') {
+      this.chips += 1;
+      this.player.score += 350;
+      if (item.chipId) SaveSystem.collectChip(this.levelId, item.chipId);
+      this.toast.show('Debug chip acquired.');
+    } else if (item.power) {
+      this.player.applyPower(item.power);
+      this.toast.show(`${item.power} online.`);
+    }
+    floatingText(this, item.x, item.y, '+');
+    item.destroy();
+  }
+
+  private touchEnemy(enemy: Enemy): void {
+    const body = this.player.body as Phaser.Physics.Arcade.Body;
+    if (body.velocity.y > 80 && this.player.y < enemy.y - 8) {
+      const defeated = enemy.hurt(1);
+      body.setVelocityY(-360);
+      if (defeated) this.player.score += enemy.scoreValue;
+    } else if (this.player.takeDamage(1, enemy.x)) {
+      this.killPlayer();
+    }
+  }
+
+  private attackEnemy(enemy: Enemy): void {
+    const defeated = enemy.hurt(this.player.powerUp === 'Solder Sword' ? 2 : 1);
+    if (defeated) this.player.score += enemy.scoreValue;
+  }
+
+  private hitHazard(hazard: Hazard): void {
+    if (!hazard.armed) return;
+    if (hazard.hazardType === 'explosive') {
+      hazard.armed = false;
+      hazard.setScale(2.2, 1.7);
+      this.cameras.main.shake(130, 0.008);
+      this.time.delayedCall(180, () => hazard.destroy());
+    }
+    if (this.player.takeDamage(1, hazard.x)) this.killPlayer();
+  }
+
+  private handleWorldHazards(): void {
+    this.children.each((child) => {
+      const obj = child as Phaser.GameObjects.GameObject & { getData?: (key: string) => unknown; active: boolean; destroy: () => void; x?: number };
+      if (!obj.getData?.('projectile') && !obj.getData?.('hazard')) return true;
+      if (obj.active && this.physics.overlap(this.player, obj as Phaser.GameObjects.GameObject)) {
+        if (this.player.takeDamage(Number(obj.getData('damage') ?? 1), obj.x)) this.killPlayer();
+        if (obj.getData('projectile')) obj.destroy();
+      }
+      return true;
+    });
+  }
+
+  private startBoss(): void {
+    this.bossStarted = true;
+    const x = this.spec.bossArenaX + 520;
+    const y = 400;
+    this.boss = this.spec.theme.boss === 'diode' ? new DiscoDiode(this, x, y) : this.spec.theme.boss === 'overcharge' ? new CaptainOvercharge(this, x, y) : new LooseConnection(this, x, y - 60);
+    this.platforms.forEach((platform) => this.physics.add.collider(this.boss!, platform));
+    this.physics.add.overlap(this.player.attackBox, this.boss, () => this.hitBoss());
+    this.physics.add.overlap(this.player, this.boss, () => this.touchBoss());
+    this.audio.boss();
+    this.showBossTitle(this.boss.title);
+    this.bossBarBack = this.add.rectangle(480, 60, 360, 16, 0x102530).setScrollFactor(0).setDepth(100).setStrokeStyle(2, 0xf7fff7);
+    this.bossBar = this.add.rectangle(300, 60, 356, 10, 0xff3e5f).setOrigin(0, 0.5).setScrollFactor(0).setDepth(101);
+  }
+
+  private touchBoss(): void {
+    if (!this.boss) return;
+    const body = this.player.body as Phaser.Physics.Arcade.Body;
+    if (body.velocity.y > 130 && this.player.y < this.boss.y - 28) {
+      body.setVelocityY(-410);
+      this.hitBoss();
+    } else if (this.player.takeDamage(1, this.boss.x)) {
+      this.killPlayer();
+    }
+  }
+
+  private hitBoss(): void {
+    if (!this.boss?.active || this.boss.defeated) return;
+    if (this.time.now - this.lastBossHitAt < 260) return;
+    this.lastBossHitAt = this.time.now;
+    const defeated = this.boss.hurt(this.player.powerUp === 'Solder Sword' ? 2 : 1);
+    if (defeated) {
+      this.player.score += 1000;
+      this.bossBar?.destroy();
+      this.bossBarBack?.destroy();
+      this.time.delayedCall(900, () => this.scene.start('LevelCompleteScene', { level: this.levelId, score: this.player.score, chips: Math.min(3, this.chips) }));
+    }
+  }
+
+  private updateBossBar(): void {
+    if (!this.boss || !this.bossBar) return;
+    this.bossBar.width = 356 * Phaser.Math.Clamp(this.boss.health / this.boss.maxHealth, 0, 1);
+  }
+
+  private showBossTitle(title: string): void {
+    const label = this.add.text(480, 126, title, { fontFamily: 'monospace', fontSize: '34px', color: '#ffe05d', stroke: '#07131b', strokeThickness: 6 }).setOrigin(0.5).setScrollFactor(0).setDepth(120);
+    this.tweens.add({ targets: label, alpha: 0, delay: 1300, duration: 550, onComplete: () => label.destroy() });
+  }
+
+  private killPlayer(): void {
+    if (this.player.health <= 0) {
+      this.scene.start('GameOverScene', { level: this.levelId, score: this.player.score });
+    } else {
+      this.player.restartAtCheckpoint();
+      this.toast.show('That was probably safe.');
+    }
+  }
+
+  private togglePause(): void {
+    this.paused = !this.paused;
+    if (this.paused) {
+      this.physics.pause();
+      this.pausePanel = this.add.container(480, 270).setScrollFactor(0).setDepth(200);
+      const bg = this.add.rectangle(0, 0, 360, 180, 0x07131b, 0.92).setStrokeStyle(2, 0x45c4ff);
+      const title = this.add.text(0, -48, 'Paused', { fontFamily: 'monospace', fontSize: '30px', color: '#ffe05d' }).setOrigin(0.5);
+      const info = this.add.text(0, 28, 'Esc resume\nR restart checkpoint', { fontFamily: 'monospace', fontSize: '18px', color: '#f7fff7', align: 'center' }).setOrigin(0.5);
+      this.pausePanel.add([bg, title, info]);
+    } else {
+      this.physics.resume();
+      this.pausePanel?.destroy();
+    }
+  }
+}
