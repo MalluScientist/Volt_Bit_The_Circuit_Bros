@@ -37,7 +37,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.setCollideWorldBounds(false);
     this.setSize(24, 34).setOffset(4, 2);
     this.setDragX(1700);
-    this.setMaxVelocity(390, 760);
+    this.setMaxVelocity(420, 780);
     this.cursors = scene.input.keyboard!.createCursorKeys();
     this.keys = {
       a: scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.A),
@@ -58,7 +58,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const body = this.body as Phaser.Physics.Arcade.Body;
     const grounded = body.blocked.down || body.touching.down;
     const accel = this.powerUp === 'Battery Boost' ? 1700 : 1300;
-    const max = this.powerUp === 'Battery Boost' ? 285 : 225;
+    const max = this.powerUp === 'Battery Boost' ? 330 : 270;
     if (grounded) this.lastGroundedAt = time;
     if (Phaser.Input.Keyboard.JustDown(this.cursors.space!) || Phaser.Input.Keyboard.JustDown(this.keys.w) || Phaser.Input.Keyboard.JustDown(this.cursors.up!)) {
       this.jumpBufferedAt = time;
@@ -75,16 +75,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       } else {
         body.setAccelerationX(0);
       }
-      body.setMaxVelocity(max, 760);
+      body.setMaxVelocity(max, 780);
     }
-    if (time - this.jumpBufferedAt < 130 && time - this.lastGroundedAt < 115) {
-      body.setVelocityY(-525);
+    if (time - this.jumpBufferedAt < 150 && time - this.lastGroundedAt < 140) {
+      body.setVelocityY(-570);
       this.jumpBufferedAt = -999;
       this.lastGroundedAt = -999;
       this.audio.jump();
     }
     const jumpHeld = this.cursors.space?.isDown || this.keys.w.isDown || this.cursors.up?.isDown;
-    if (!jumpHeld && body.velocity.y < -120) body.setVelocityY(body.velocity.y + 22 * (delta / 16.6));
+    if (!jumpHeld && body.velocity.y < -140) body.setVelocityY(body.velocity.y + 20 * (delta / 16.6));
     if (Phaser.Input.Keyboard.JustDown(this.keys.k) && time >= this.dashAvailableAt) this.dash(time);
     if (Phaser.Input.Keyboard.JustDown(this.keys.j)) this.attack(time);
     if (this.powerUp !== 'None' && this.powerUp !== 'Fuse Shield' && time > this.powerUntil) this.powerUp = 'None';

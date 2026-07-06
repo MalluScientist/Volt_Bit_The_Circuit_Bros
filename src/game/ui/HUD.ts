@@ -26,9 +26,9 @@ export class HUD {
       const cell = scene.add.rectangle(24 + i * 24, 18, 18, 22, 0x1c3c48).setStrokeStyle(2, 0xffe05d).setScrollFactor(0).setDepth(91);
       this.hearts.push(cell);
     }
-    scene.add.rectangle(168, 18, 92, 12, 0x102530).setStrokeStyle(1, 0x45c4ff).setScrollFactor(0).setDepth(91);
-    this.dashBar = scene.add.rectangle(123, 18, 0, 10, 0x45c4ff).setOrigin(0, 0.5).setScrollFactor(0).setDepth(92);
-    this.coinText = this.text(230, 9);
+    scene.add.rectangle(188, 18, 92, 12, 0x102530).setStrokeStyle(1, 0x45c4ff).setScrollFactor(0).setDepth(91);
+    this.dashBar = scene.add.rectangle(143, 18, 0, 10, 0x45c4ff).setOrigin(0, 0.5).setScrollFactor(0).setDepth(92);
+    this.coinText = this.text(250, 9);
     this.scoreText = this.text(350, 9);
     this.levelText = this.text(540, 9);
     this.powerText = this.text(770, 9);
