@@ -8,8 +8,8 @@ type PlayerState = 'idle' | 'run' | 'jump' | 'fall' | 'attack';
 export class Player extends Phaser.Physics.Arcade.Sprite {
   cursors: Phaser.Types.Input.Keyboard.CursorKeys;
   keys: Record<'a' | 'd' | 'w' | 'j' | 'k' | 'r' | 'esc', Phaser.Input.Keyboard.Key>;
-  health = 4;
-  maxHealth = 4;
+  health = 5;
+  maxHealth = 5;
   coins = 0;
   score = 0;
   powerUp: PowerUpType = 'None';
