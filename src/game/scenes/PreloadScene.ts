@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { COLORS } from '../constants';
+import { SaveSystem } from '../systems/SaveSystem';
 
 export class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -24,7 +25,7 @@ export class PreloadScene extends Phaser.Scene {
     this.rectTexture('chip', 18, 18, 0x159947, 0xf7fff7);
     this.rectTexture('powerup', 22, 22, 0xff3e5f, 0x45c4ff);
     this.rectTexture('checkpoint', 28, 48, 0x45c4ff, 0xffe05d);
-    this.scene.start('MainMenuScene');
+    this.scene.start(SaveSystem.load().storySeen ? 'MainMenuScene' : 'StoryScene');
   }
 
   private rectTexture(key: string, w: number, h: number, fill: number, accent: number): void {

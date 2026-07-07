@@ -14,7 +14,10 @@ export class Collectible extends Phaser.Physics.Arcade.Sprite {
     this.power = power;
     scene.add.existing(this);
     scene.physics.add.existing(this);
-    (this.body as Phaser.Physics.Arcade.Body).setAllowGravity(false);
+    const body = this.body as Phaser.Physics.Arcade.Body;
+    body.setAllowGravity(false);
+    body.setImmovable(true);
+    body.setVelocity(0, 0);
     scene.tweens.add({ targets: this, y: y - 5, yoyo: true, repeat: -1, duration: 900, ease: 'Sine.easeInOut' });
   }
 }

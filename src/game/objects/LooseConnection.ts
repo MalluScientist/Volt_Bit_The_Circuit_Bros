@@ -26,8 +26,10 @@ export class LooseConnection extends Boss {
     this.setAlpha(0.35);
     this.scene.time.delayedCall(160, () => this.setAlpha(1));
     const shock = new Hazard(this.scene, socket.x, socket.y + 78, 94, 16, 'shock');
+    shock.setData('bossObject', true);
     this.scene.time.delayedCall(720, () => shock.destroy());
     const platform = new Platform(this.scene, { x: socket.x, y: socket.y + 20, w: 86, h: 14, kind: 'glitch' }, 0x8e6bff);
+    platform.setData('bossObject', true);
     this.scene.time.delayedCall(1400, () => platform.destroy());
   }
 }

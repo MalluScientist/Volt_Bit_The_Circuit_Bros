@@ -10,122 +10,98 @@ export function makeLevel(id: number): LevelSpec {
   ];
   const theme = themes[id - 1];
   const basePlatforms: PlatformSpec[] = [
-    { x: 340, y: 500, w: 680, h: 48 },
-    { x: 960, y: 452, w: 320, h: 30 },
-    { x: 1320, y: 398, w: 300, h: 28 },
-    { x: 1720, y: 460, w: 430, h: 36 },
-    { x: 2180, y: 400, w: 340, h: 28 },
-    { x: 2600, y: 462, w: 470, h: 36 },
-    { x: 3140, y: 420, w: 420, h: 30 },
-    { x: 3780, y: 498, w: 800, h: 48 }
+    { x: 360, y: 454, w: 720, h: 48 },
+    { x: 1040, y: 440, w: 420, h: 34 },
+    { x: 1580, y: 420, w: 460, h: 34 },
+    { x: 2180, y: 440, w: 500, h: 36 },
+    { x: 2820, y: 430, w: 520, h: 34 },
+    { x: 3720, y: 454, w: 980, h: 48 }
   ];
   if (id === 1) {
     const level1Ground: PlatformSpec[] = [
-      { x: 360, y: 500, w: 720, h: 48 },
-      { x: 900, y: 465, w: 320, h: 30 },
-      { x: 1250, y: 430, w: 300, h: 28 },
-      { x: 1620, y: 455, w: 360, h: 36 },
-      { x: 2020, y: 430, w: 340, h: 30 },
-      { x: 2420, y: 455, w: 360, h: 36 },
-      { x: 2860, y: 440, w: 360, h: 30 },
-      { x: 3300, y: 430, w: 340, h: 30 },
-      { x: 3860, y: 498, w: 880, h: 48 }
+      { x: 360, y: 454, w: 720, h: 48 },
+      { x: 1020, y: 440, w: 420, h: 34 },
+      { x: 1580, y: 430, w: 460, h: 34 },
+      { x: 2200, y: 440, w: 520, h: 36 },
+      { x: 2860, y: 438, w: 520, h: 34 },
+      { x: 3780, y: 454, w: 1040, h: 48 }
     ];
     const level1Platforms: PlatformSpec[] = [
       ...level1Ground,
-      { x: 720, y: 405, w: 150, h: 20, kind: 'blink' },
-      { x: 1120, y: 380, w: 150, h: 20, kind: 'blink' },
-      { x: 1510, y: 350, w: 140, h: 20, kind: 'solid' },
-      { x: 1980, y: 365, w: 170, h: 20, kind: 'blink' },
-      { x: 2460, y: 365, w: 160, h: 20, kind: 'solid' },
-      { x: 2880, y: 370, w: 170, h: 20, kind: 'blink' },
-      { x: 3330, y: 375, w: 190, h: 20 }
+      { x: 1240, y: 360, w: 180, h: 20, kind: 'blink' },
+      { x: 2480, y: 365, w: 180, h: 20, kind: 'solid' }
     ];
     return {
       id,
       theme,
-      width: 4300,
-      start: new Phaser.Math.Vector2(80, 390),
-      checkpoint: new Phaser.Math.Vector2(2080, 320),
-      bossArenaX: 3520,
+      width: 4200,
+      start: new Phaser.Math.Vector2(80, 350),
+      checkpoint: new Phaser.Math.Vector2(2200, 330),
+      bossArenaX: 3420,
       platforms: level1Platforms,
       enemies: [
-        { type: 'led', x: 780, y: 410 },
-        { type: 'slime', x: 1260, y: 350 },
-        { type: 'led', x: 1860, y: 410 },
-        { type: 'bat', x: 2360, y: 260 },
-        { type: 'led', x: 3100, y: 360 }
+        { type: 'led', x: 980, y: 370 },
+        { type: 'slime', x: 1620, y: 360 },
+        { type: 'bat', x: 2500, y: 270 },
+        { type: 'led', x: 3040, y: 370 }
       ],
       collectibles: placeCollectibles(level1Platforms, pickups(id)),
       hazards: placeHazards(level1Platforms, [
-        { type: 'beam', x: 1640, y: 428, w: 110, h: 18 },
-        { type: 'beam', x: 2740, y: 428, w: 100, h: 18 }
+        { type: 'beam', x: 1880, y: 428, w: 110, h: 18 }
       ])
     };
   }
   if (id === 2) {
     const level2Platforms: PlatformSpec[] = [
       ...basePlatforms,
-      { x: 750, y: 360, w: 140, h: 20, kind: 'boost' },
-      { x: 1220, y: 330, w: 150, h: 20, kind: 'moving' },
-      { x: 1690, y: 300, w: 140, h: 20, kind: 'moving' },
-      { x: 2340, y: 330, w: 150, h: 20, kind: 'boost' },
-      { x: 2890, y: 305, w: 170, h: 20, kind: 'moving' }
+      { x: 1180, y: 350, w: 170, h: 20, kind: 'boost' },
+      { x: 2360, y: 350, w: 170, h: 20, kind: 'moving' }
     ];
     return {
       id,
       theme,
-      width: 4500,
-      start: new Phaser.Math.Vector2(80, 390),
-      checkpoint: new Phaser.Math.Vector2(2200, 320),
-      bossArenaX: 3650,
+      width: 4300,
+      start: new Phaser.Math.Vector2(80, 350),
+      checkpoint: new Phaser.Math.Vector2(2180, 330),
+      bossArenaX: 3500,
       platforms: level2Platforms,
       enemies: [
-        { type: 'slime', x: 700, y: 410 },
-        { type: 'bat', x: 1160, y: 250 },
-        { type: 'led', x: 1760, y: 410 },
-        { type: 'bug', x: 2360, y: 260 },
-        { type: 'bat', x: 3060, y: 280 }
+        { type: 'slime', x: 760, y: 410 },
+        { type: 'bat', x: 1500, y: 260 },
+        { type: 'bug', x: 2380, y: 280 },
+        { type: 'led', x: 3060, y: 370 }
       ],
       collectibles: placeCollectibles(level2Platforms, pickups(id)),
       hazards: placeHazards(level2Platforms, [
-        { type: 'explosive', x: 1460, y: 374, w: 42, h: 42 },
-        { type: 'acid', x: 2020, y: 492, w: 150, h: 18 },
-        { type: 'explosive', x: 2750, y: 438, w: 42, h: 42 },
-        { type: 'acid', x: 3340, y: 492, w: 140, h: 18 }
+        { type: 'explosive', x: 1780, y: 374, w: 42, h: 42 },
+        { type: 'acid', x: 3200, y: 448, w: 140, h: 18 }
       ])
     };
   }
   const level3Platforms: PlatformSpec[] = [
     ...basePlatforms,
-    { x: 770, y: 360, w: 150, h: 20, kind: 'bounce' },
-    { x: 1180, y: 320, w: 170, h: 20, kind: 'bridge' },
-    { x: 1540, y: 280, w: 150, h: 20, kind: 'glitch' },
-    { x: 2020, y: 300, w: 150, h: 20, kind: 'bounce' },
-    { x: 2450, y: 260, w: 170, h: 20, kind: 'bridge' },
-    { x: 2880, y: 330, w: 160, h: 20, kind: 'glitch' },
-    { x: 1160, y: 145, w: 190, h: 20, kind: 'bridge' }
+    { x: 1180, y: 350, w: 170, h: 20, kind: 'bounce' },
+    { x: 2360, y: 335, w: 190, h: 20, kind: 'bridge' },
+    { x: 2920, y: 330, w: 180, h: 20, kind: 'glitch' }
   ];
   return {
     id,
     theme,
-    width: 4600,
-    start: new Phaser.Math.Vector2(80, 390),
-    checkpoint: new Phaser.Math.Vector2(2230, 320),
-    bossArenaX: 3740,
+    width: 4400,
+    start: new Phaser.Math.Vector2(80, 350),
+    checkpoint: new Phaser.Math.Vector2(2180, 330),
+    bossArenaX: 3580,
     platforms: level3Platforms,
     enemies: [
-      { type: 'bug', x: 720, y: 300 },
-      { type: 'slime', x: 1300, y: 350 },
-      { type: 'bat', x: 1840, y: 240 },
-      { type: 'bug', x: 2460, y: 190 },
-      { type: 'led', x: 3200, y: 370 }
+      { type: 'bug', x: 760, y: 330 },
+      { type: 'slime', x: 1600, y: 350 },
+      { type: 'bat', x: 2380, y: 250 },
+      { type: 'led', x: 3120, y: 370 }
     ],
-    collectibles: placeCollectibles(level3Platforms, [...pickups(id).filter((item) => item.id !== 'chip-3-c'), { type: 'chip', x: 1160, y: 95, id: 'chip-3-secret' }, { type: 'powerup', x: 1220, y: 95, power: 'Fuse Shield' }]),
+    collectibles: placeCollectibles(level3Platforms, pickups(id)),
     hazards: placeHazards(level3Platforms, [
-      { type: 'shock', x: 1700, y: 382, w: 110, h: 18 },
-      { type: 'shock', x: 2750, y: 448, w: 130, h: 18 },
-      { type: 'beam', x: 3320, y: 490, w: 110, h: 18 }
+      { type: 'shock', x: 1780, y: 382, w: 110, h: 18 },
+      { type: 'beam', x: 3180, y: 448, w: 110, h: 18 }
     ])
   };
 }
@@ -133,15 +109,11 @@ export function makeLevel(id: number): LevelSpec {
 function pickups(level: number): LevelSpec['collectibles'] {
   return [
     { type: 'coin', x: 360, y: 420 },
-    { type: 'coin', x: 430, y: 420 },
-    { type: 'coin', x: 980, y: 390 },
-    { type: 'cell', x: 1320, y: 345 },
-    { type: 'chip', x: 1510, y: 230, id: `chip-${level}-a` },
-    { type: 'coin', x: 1880, y: 390 },
+    { type: 'cell', x: 1040, y: 390 },
+    { type: 'chip', x: 1500, y: 345, id: `chip-${level}-a` },
     { type: 'powerup', x: 2180, y: 350, power: level === 1 ? 'Solder Sword' : level === 2 ? 'Battery Boost' : 'Fuse Shield' },
-    { type: 'coin', x: 2500, y: 260 },
-    { type: 'chip', x: 2920, y: 270, id: `chip-${level}-b` },
-    { type: 'cell', x: 3160, y: 360 },
+    { type: 'chip', x: 2820, y: 340, id: `chip-${level}-b` },
+    { type: 'cell', x: 3180, y: 360 },
     { type: 'chip', x: 3420, y: 320, id: `chip-${level}-c` }
   ];
 }
@@ -150,7 +122,7 @@ function placeCollectibles(platforms: LevelSpec['platforms'], items: LevelSpec['
   return items.map((item) => {
     const platform = findSupportingPlatform(platforms, item.x, 24);
     if (!platform) return item;
-    return { ...item, y: platformTop(platform) - pickupOffset(item.type) };
+    return { ...item, y: Math.min(platformTop(platform) - pickupOffset(item.type), 332) };
   });
 }
 
@@ -173,5 +145,5 @@ function platformTop(platform: LevelSpec['platforms'][number]): number {
 }
 
 function pickupOffset(type: CollectibleType): number {
-  return type === 'cell' ? 48 : 54;
+  return type === 'cell' ? 70 : 76;
 }

@@ -5,7 +5,9 @@ const KEY = 'circuit-bros-save-v1';
 const DEFAULT_SAVE: SaveData = {
   highScore: 0,
   completedLevels: [],
-  debugChips: {}
+  debugChips: {},
+  musicEnabled: true,
+  storySeen: false
 };
 
 export class SaveSystem {
@@ -34,6 +36,18 @@ export class SaveSystem {
     const key = String(level);
     data.debugChips[key] ??= [];
     if (!data.debugChips[key].includes(chipId)) data.debugChips[key].push(chipId);
+    SaveSystem.save(data);
+  }
+
+  static setMusicEnabled(enabled: boolean): void {
+    const data = SaveSystem.load();
+    data.musicEnabled = enabled;
+    SaveSystem.save(data);
+  }
+
+  static setStorySeen(): void {
+    const data = SaveSystem.load();
+    data.storySeen = true;
     SaveSystem.save(data);
   }
 }

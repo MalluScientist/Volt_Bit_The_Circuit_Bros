@@ -9,13 +9,13 @@ export class Platform extends Phaser.GameObjects.Rectangle {
 
   constructor(scene: Phaser.Scene, spec: PlatformSpec, color: number) {
     const fill = spec.kind === 'boost' ? 0x45c4ff : spec.kind === 'bounce' ? 0xff3e5f : spec.kind === 'glitch' ? 0x8e6bff : color;
-    super(scene, spec.x, spec.y, spec.w, spec.h, fill, 1);
+    super(scene, spec.x, spec.y, spec.w, spec.h, fill, spec.kind ? 0.92 : 0.86);
     this.kind = spec.kind ?? 'solid';
     this.baseX = spec.x;
     this.baseY = spec.y;
     scene.add.existing(this);
     scene.physics.add.existing(this, true);
-    this.setStrokeStyle(2, 0xf3a33a);
+    this.setStrokeStyle(1, 0xf7fff7, spec.kind ? 0.45 : 0.22);
   }
 
   tick(time: number): void {

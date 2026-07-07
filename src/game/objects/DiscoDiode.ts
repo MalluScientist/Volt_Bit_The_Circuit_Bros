@@ -18,6 +18,7 @@ export class DiscoDiode extends Boss {
     body.setVelocityX(player.x < this.x ? -300 : 300);
     beam.setData('damage', 1);
     beam.setData('projectile', true);
+    beam.setData('bossObject', true);
     this.scene.time.delayedCall(2200, () => beam.destroy());
     this.setTint(Phaser.Math.RND.pick([0xff3e5f, 0x45c4ff, 0xffe05d]));
     this.scene.time.delayedCall(120, () => this.clearTint());

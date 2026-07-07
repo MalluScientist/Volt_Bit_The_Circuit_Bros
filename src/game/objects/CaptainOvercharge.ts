@@ -22,6 +22,7 @@ export class CaptainOvercharge extends Boss {
       this.clearTint();
       body.setVelocityX(player.x < this.x ? -360 : 360);
       const bomb = new Hazard(this.scene, this.x, this.y + 72, 34, 34, 'explosive');
+      bomb.setData('bossObject', true);
       this.scene.time.delayedCall(1150, () => {
         if (!bomb.active) return;
         bomb.setSize(92, 70);

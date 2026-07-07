@@ -6,6 +6,8 @@ export interface SaveData {
   highScore: number;
   completedLevels: number[];
   debugChips: Record<string, string[]>;
+  musicEnabled: boolean;
+  storySeen: boolean;
 }
 
 export interface LevelTheme {

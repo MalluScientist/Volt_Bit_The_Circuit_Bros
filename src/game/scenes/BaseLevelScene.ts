@@ -44,13 +44,14 @@ export abstract class BaseLevelScene extends Phaser.Scene {
   private lastBossHitAt = 0;
 
   create(): void {
+    this.resetSceneState();
     this.spec = makeLevel(this.levelId);
     this.physics.world.setBounds(0, 0, this.spec.width, GAME_HEIGHT + 220);
     this.cameras.main.setBounds(0, 0, this.spec.width, GAME_HEIGHT);
     this.cameras.main.setBackgroundColor(this.spec.theme.sky);
     this.drawBackground();
     this.enemies = this.physics.add.group();
-    this.collectibles = this.physics.add.group();
+    this.collectibles = this.physics.add.group({ allowGravity: false, immovable: true });
     this.platforms = this.spec.platforms.map((p) => new Platform(this, p, this.spec.theme.ground));
     this.hazards = this.spec.hazards.map((h) => new Hazard(this, h.x, h.y, h.w, h.h, h.type));
     this.checkpoint = new Checkpoint(this, this.spec.checkpoint.x, this.spec.checkpoint.y);
@@ -64,7 +65,20 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     this.spawnCollectibles();
     this.wirePhysics();
     this.input.keyboard!.on('keydown-ESC', () => this.togglePause());
-    this.input.keyboard!.on('keydown-R', () => this.player.restartAtCheckpoint());
+    this.input.keyboard!.on('keydown-R', () => this.retryFromCheckpoint());
+  }
+
+  private resetSceneState(): void {
+    this.platforms = [];
+    this.hazards = [];
+    this.boss = undefined;
+    this.bossStarted = false;
+    this.bossBar = undefined;
+    this.bossBarBack = undefined;
+    this.pausePanel = undefined;
+    this.paused = false;
+    this.lastBossHitAt = 0;
+    this.chips = 0;
   }
 
   update(time: number): void {
@@ -77,6 +91,7 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     if (!this.bossStarted && this.player.x > this.spec.bossArenaX) this.startBoss();
     if (this.boss?.active) {
       this.boss.tick(time, this.player);
+      this.constrainBossToArena();
       this.updateBossBar();
     }
     this.handleWorldHazards();
@@ -95,16 +110,18 @@ export abstract class BaseLevelScene extends Phaser.Scene {
 
   private drawBackground(): void {
     const g = this.add.graphics().setDepth(-10);
-    g.lineStyle(1, this.spec.theme.ground, 0.18);
-    for (let x = 0; x < this.spec.width; x += 80) g.lineBetween(x, 0, x, GAME_HEIGHT);
-    for (let y = 40; y < GAME_HEIGHT; y += 80) g.lineBetween(0, y, this.spec.width, y);
-    g.lineStyle(4, this.spec.theme.accent, 0.45);
-    for (let x = 0; x < this.spec.width; x += 360) {
-      g.lineBetween(x, 470, x + 200, 330);
-      g.strokeCircle(x + 220, 318, 9);
+    g.fillStyle(0x000000, 0.12);
+    g.fillRect(0, 416, this.spec.width, 124);
+    g.lineStyle(1, this.spec.theme.ground, 0.1);
+    for (let x = 0; x < this.spec.width; x += 240) g.lineBetween(x, 72, x, GAME_HEIGHT);
+    for (let y = 120; y < GAME_HEIGHT; y += 140) g.lineBetween(0, y, this.spec.width, y);
+    g.lineStyle(3, this.spec.theme.accent, 0.22);
+    for (let x = 260; x < this.spec.width; x += 720) {
+      g.lineBetween(x, 450, x + 160, 370);
+      g.strokeCircle(x + 178, 362, 6);
     }
-    for (let x = 280; x < this.spec.width; x += 520) {
-      this.add.rectangle(x, 110 + (x % 160), 26, 34, this.spec.theme.accent, 0.7).setDepth(-5);
+    for (let x = 420; x < this.spec.width; x += 900) {
+      this.add.rectangle(x, 126 + (x % 90), 18, 24, this.spec.theme.accent, 0.32).setDepth(-5);
     }
   }
 
@@ -116,7 +133,14 @@ export abstract class BaseLevelScene extends Phaser.Scene {
   }
 
   private spawnCollectibles(): void {
-    this.spec.collectibles.forEach((s) => this.collectibles.add(new Collectible(this, s.x, s.y, s.type, s.id, s.power)));
+    this.spec.collectibles.forEach((s) => {
+      const collectible = new Collectible(this, s.x, s.y, s.type, s.id, s.power);
+      this.collectibles.add(collectible);
+      const body = collectible.body as Phaser.Physics.Arcade.Body;
+      body.setAllowGravity(false);
+      body.setImmovable(true);
+      body.setVelocity(0, 0);
+    });
   }
 
   private wirePhysics(): void {
@@ -252,6 +276,14 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     this.bossBar.width = 356 * Phaser.Math.Clamp(this.boss.health / this.boss.maxHealth, 0, 1);
   }
 
+  private constrainBossToArena(): void {
+    if (!this.boss?.active) return;
+    const body = this.boss.body as Phaser.Physics.Arcade.Body;
+    body.setAllowGravity(false);
+    body.setVelocityY(0);
+    this.boss.y = Phaser.Math.Clamp(this.boss.y, 130, 405);
+  }
+
   private showBossTitle(title: string): void {
     const label = this.add.text(480, 126, title, { fontFamily: 'monospace', fontSize: '34px', color: '#ffe05d', stroke: '#07131b', strokeThickness: 6 }).setOrigin(0.5).setScrollFactor(0).setDepth(120);
     this.tweens.add({ targets: label, alpha: 0, delay: 1300, duration: 550, onComplete: () => label.destroy() });
@@ -261,9 +293,34 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     if (this.player.health <= 0) {
       this.scene.start('GameOverScene', { level: this.levelId, score: this.player.score });
     } else {
-      this.player.restartAtCheckpoint();
+      this.retryFromCheckpoint();
       this.toast.show('That was probably safe.');
     }
+  }
+
+  private retryFromCheckpoint(): void {
+    this.resetBossEncounter();
+    this.player.restartAtCheckpoint();
+  }
+
+  private resetBossEncounter(): void {
+    if (!this.bossStarted && !this.boss && !this.bossBar && !this.bossBarBack) return;
+    if (this.boss?.defeated) return;
+
+    this.bossStarted = false;
+    this.lastBossHitAt = 0;
+    this.boss?.destroy();
+    this.boss = undefined;
+    this.bossBar?.destroy();
+    this.bossBar = undefined;
+    this.bossBarBack?.destroy();
+    this.bossBarBack = undefined;
+
+    this.children.each((child) => {
+      const obj = child as Phaser.GameObjects.GameObject & { getData?: (key: string) => unknown; active: boolean; destroy: () => void };
+      if (obj.active && (obj.getData?.('projectile') || obj.getData?.('bossObject'))) obj.destroy();
+      return true;
+    });
   }
 
   private togglePause(): void {

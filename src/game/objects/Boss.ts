@@ -13,9 +13,13 @@ export abstract class Boss extends Phaser.Physics.Arcade.Sprite {
     super(scene, x, y, texture);
     scene.add.existing(this);
     scene.physics.add.existing(this);
-    this.setImmovable(true);
-    this.setCollideWorldBounds(false);
     this.setSize(58, 62);
+    this.setImmovable(true);
+    this.setCollideWorldBounds(true);
+    const body = this.body as Phaser.Physics.Arcade.Body;
+    body.setAllowGravity(false);
+    body.setVelocity(0, 0);
+    body.setImmovable(true);
   }
 
   abstract tick(time: number, player: Player): void;
