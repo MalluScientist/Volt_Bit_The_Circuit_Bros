@@ -1,0 +1,147 @@
+Circuit Bros: Debug Quest - itch.io Project Page Details
+=========================================================
+
+Upload File
+-----------
+Use this zip file:
+volt-bit-itch.zip
+
+The zip should contain index.html at the root, plus the assets folder.
+
+
+Project Basics
+--------------
+Title:
+Circuit Bros: Debug Quest
+
+Short description / tagline:
+Debug first, ask questions later.
+
+Project type:
+HTML
+
+Kind of project:
+Game
+
+Release status:
+Prototype / Demo
+
+Pricing:
+Free, or Name your own price if you want donations enabled.
+
+
+Embed Options
+-------------
+This file will be played in the browser:
+Yes
+
+Embed in page:
+Yes
+
+Fullscreen button:
+Yes
+
+SharedArrayBuffer support:
+No
+
+Automatically start on page load:
+Optional. Leave off if you want players to click Run first.
+
+
+Viewport Dimensions
+-------------------
+Width:
+960
+
+Height:
+540
+
+The game is built at 960x540 and uses fit scaling, so it preserves the 16:9 aspect ratio.
+
+
+Suggested Description
+---------------------
+Circuit Bros: Debug Quest is a retro 2D action platformer set inside a bright electronics fantasy world.
+
+Play as Volt, a tiny engineer-adventurer with goggles, a tool belt, and a cartoony solder slash. Jump across circuit-board platforms, dodge hazards, collect debug chips, fight strange electronic enemies, and restore continuity across three short levels.
+
+This prototype includes:
+- 3 playable levels
+- Platforming, enemies, hazards, and collectibles
+- Checkpoints
+- Hidden debug chips
+- Mini bosses
+- Original code-generated placeholder pixel-style art
+- Simple generated sound effects using the Web Audio API
+
+
+Controls
+--------
+Move:
+A/D or Left/Right
+
+Jump:
+Space, W, or Up
+
+Attack:
+J
+
+Dash:
+K
+
+Restart from checkpoint:
+R
+
+Pause:
+Esc
+
+
+Levels
+------
+Level 1:
+LED Carnival
+
+Level 2:
+Battery Badlands
+
+Level 3:
+Breadboard Bazaar
+
+
+Tags
+----
+2D
+Platformer
+Action
+Arcade
+Retro
+Pixel Art
+Singleplayer
+Browser Game
+HTML5
+Phaser
+Adventure
+Cute
+Sci-fi
+Robots
+Family Friendly
+
+Best short tag set:
+2D, Platformer, Action, Arcade, Retro, Pixel Art, HTML5, Browser Game, Singleplayer, Sci-fi
+
+
+Asset / Copyright Notes
+-----------------------
+All current art is original generated placeholder pixel-style art made in code.
+
+Sound effects are simple generated tones through the Web Audio API.
+
+No paid assets, copyrighted sprites, music, Nintendo names, or Nintendo assets are used.
+
+
+Known Prototype Limitations
+---------------------------
+- Art and animation are placeholder-quality and intended to be replaced.
+- Levels are programmatic rather than tilemap-authored.
+- Enemy and boss AI are intentionally simple for a first playable demo.
+- There is no mobile/touch control layer yet.
