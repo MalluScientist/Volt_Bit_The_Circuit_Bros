@@ -10,8 +10,8 @@ export class Button extends Phaser.GameObjects.Container {
       color: '#f7fff7'
     }).setOrigin(0.5);
     this.add([bg, label]);
-    this.setSize(width, 44).setInteractive(
-      new Phaser.Geom.Rectangle(-width / 2, -22, width, 44),
+    this.setSize(width, 56).setInteractive(
+      new Phaser.Geom.Rectangle(-width / 2, -28, width, 56),
       Phaser.Geom.Rectangle.Contains
     );
     this.on('pointerover', () => {

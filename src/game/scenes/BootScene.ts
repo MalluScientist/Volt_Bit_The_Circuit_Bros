@@ -6,6 +6,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.input.addPointer(5);
     this.scene.start('PreloadScene');
   }
 }

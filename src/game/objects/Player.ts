@@ -24,10 +24,17 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   dashEnergy = 1;
   isDashing = false;
   state: PlayerState = 'idle';
+  touchInput = {
+    left: false,
+    right: false,
+    jumpHeld: false
+  };
 
   private audio: AudioSystem;
   private facing = 1;
   private attackingUntil = 0;
+  private beamAvailableAt = 0;
+  private doubleJumpsRemaining = 1;
 
   constructor(scene: Phaser.Scene, x: number, y: number, audio: AudioSystem) {
     super(scene, x, y, 'volt-idle');
@@ -59,12 +66,15 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const grounded = body.blocked.down || body.touching.down;
     const accel = this.powerUp === 'Battery Boost' ? 1700 : 1300;
     const max = this.powerUp === 'Battery Boost' ? 330 : 270;
-    if (grounded) this.lastGroundedAt = time;
+    if (grounded) {
+      this.lastGroundedAt = time;
+      this.doubleJumpsRemaining = 1;
+    }
     if (Phaser.Input.Keyboard.JustDown(this.cursors.space!) || Phaser.Input.Keyboard.JustDown(this.keys.w) || Phaser.Input.Keyboard.JustDown(this.cursors.up!)) {
       this.jumpBufferedAt = time;
     }
-    const left = this.cursors.left?.isDown || this.keys.a.isDown;
-    const right = this.cursors.right?.isDown || this.keys.d.isDown;
+    const left = this.cursors.left?.isDown || this.keys.a.isDown || this.touchInput.left;
+    const right = this.cursors.right?.isDown || this.keys.d.isDown || this.touchInput.right;
     if (!this.isDashing) {
       if (left) {
         body.setAccelerationX(-accel);
@@ -82,14 +92,19 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.jumpBufferedAt = -999;
       this.lastGroundedAt = -999;
       this.audio.jump();
+    } else if (time - this.jumpBufferedAt < 150 && this.doubleJumpsRemaining > 0) {
+      body.setVelocityY(-520);
+      this.doubleJumpsRemaining -= 1;
+      this.jumpBufferedAt = -999;
+      this.audio.jump();
+      burst(this.scene, this.x, this.y + 18, 0x45c4ff, 8);
     }
-    const jumpHeld = this.cursors.space?.isDown || this.keys.w.isDown || this.cursors.up?.isDown;
+    const jumpHeld = this.cursors.space?.isDown || this.keys.w.isDown || this.cursors.up?.isDown || this.touchInput.jumpHeld;
     if (!jumpHeld && body.velocity.y < -140) body.setVelocityY(body.velocity.y + 20 * (delta / 16.6));
-    if (Phaser.Input.Keyboard.JustDown(this.keys.k) && time >= this.dashAvailableAt) this.dash(time);
+    this.regenerateDash(delta);
+    if (Phaser.Input.Keyboard.JustDown(this.keys.k)) this.requestDash();
     if (Phaser.Input.Keyboard.JustDown(this.keys.j)) this.attack(time);
     if (this.powerUp !== 'None' && this.powerUp !== 'Fuse Shield' && time > this.powerUntil) this.powerUp = 'None';
-    if (this.powerUp === 'Battery Boost') this.dashAvailableAt = Math.min(this.dashAvailableAt, time + 450);
-    this.dashEnergy = Phaser.Math.Clamp(1 - Math.max(0, this.dashAvailableAt - time) / this.dashCooldown(), 0, 1);
     this.attackBox.setPosition(this.x + this.facing * (this.powerUp === 'Solder Sword' ? 34 : 26), this.y + 2);
     if (time > this.attackingUntil) {
       this.attackBox.setVisible(false);
@@ -135,15 +150,53 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.health = Math.max(1, this.health);
   }
 
+  setTouchMove(direction: 'left' | 'right', active: boolean): void {
+    this.touchInput[direction] = active;
+  }
+
+  setTouchJump(active: boolean): void {
+    this.touchInput.jumpHeld = active;
+    if (active) this.queueJump();
+  }
+
+  queueJump(): void {
+    this.jumpBufferedAt = this.scene.time.now;
+  }
+
+  requestAttack(): void {
+    this.attack(this.scene.time.now);
+  }
+
+  requestDash(): void {
+    if (this.scene.time.now >= this.dashAvailableAt && this.dashEnergy >= this.dashCost()) this.dash(this.scene.time.now);
+  }
+
+  fireChipBeam(): Phaser.GameObjects.Rectangle | undefined {
+    const time = this.scene.time.now;
+    if (time < this.beamAvailableAt) return undefined;
+    this.beamAvailableAt = time + 420;
+    const beam = this.scene.add.rectangle(this.x + this.facing * 34, this.y + 2, 34, 10, 0x45c4ff).setDepth(15);
+    this.scene.physics.add.existing(beam);
+    const body = beam.body as Phaser.Physics.Arcade.Body;
+    body.setAllowGravity(false);
+    body.setVelocityX(this.facing * 520);
+    beam.setData('playerBeam', true);
+    beam.setData('damage', 2);
+    this.scene.time.delayedCall(900, () => beam.destroy());
+    this.audio.beep(980, 0.08, 'triangle', 0.05);
+    return beam;
+  }
+
   private dash(time: number): void {
     const body = this.body as Phaser.Physics.Arcade.Body;
     this.isDashing = true;
+    this.dashEnergy = Phaser.Math.Clamp(this.dashEnergy - this.dashCost(), 0, 1);
     body.setAllowGravity(false);
     body.setAcceleration(0, 0);
-    body.setVelocity(this.facing * 560, 0);
-    this.dashAvailableAt = time + this.dashCooldown();
+    body.setVelocity(this.facing * 640, 0);
+    this.dashAvailableAt = time + 250;
     burst(this.scene, this.x - this.facing * 12, this.y, 0x45c4ff, 8);
-    this.scene.time.delayedCall(150, () => {
+    this.scene.time.delayedCall(170, () => {
       if (!this.active) return;
       this.isDashing = false;
       body.setAllowGravity(true);
@@ -160,8 +213,17 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.audio.beep(700, 0.05);
   }
 
-  private dashCooldown(): number {
-    return this.powerUp === 'Battery Boost' ? 650 : 1050;
+  private regenerateDash(delta: number): void {
+    if (this.isDashing) return;
+    this.dashEnergy = Phaser.Math.Clamp(this.dashEnergy + delta / this.dashRegenTime(), 0, 1);
+  }
+
+  private dashCost(): number {
+    return this.powerUp === 'Battery Boost' ? 0.3 : 0.45;
+  }
+
+  private dashRegenTime(): number {
+    return this.powerUp === 'Battery Boost' ? 650 : 900;
   }
 
   private updateState(grounded: boolean): void {

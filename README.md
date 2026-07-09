@@ -14,10 +14,13 @@ Each level has platforming, enemies, hazards, collectibles, a checkpoint, hidden
 
 - Move: `A/D` or `Left/Right`
 - Jump: `Space`, `W`, or `Up`
+- Double jump: press jump again in the air
 - Attack: `J`
 - Dash: `K`
+- Debug Beam: `U` after collecting all 3 debug chips in a level
 - Restart from checkpoint: `R`
 - Pause: `Esc`
+- Touch devices: on-screen move, jump, attack, dash, and beam buttons
 
 ## Run Locally
 

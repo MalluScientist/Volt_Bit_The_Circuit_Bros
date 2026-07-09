@@ -6,6 +6,7 @@ import { SaveSystem } from '../systems/SaveSystem';
 import { burst, floatingText } from '../systems/ParticleSystem';
 import { HUD } from '../ui/HUD';
 import { DialogToast } from '../ui/DialogToast';
+import { TouchControls } from '../ui/TouchControls';
 import { Platform } from '../objects/Platform';
 import { Player } from '../objects/Player';
 import { AngryLED } from '../objects/AngryLED';
@@ -42,6 +43,8 @@ export abstract class BaseLevelScene extends Phaser.Scene {
   private pausePanel?: Phaser.GameObjects.Container;
   private paused = false;
   private lastBossHitAt = 0;
+  private completingLevel = false;
+  private playerBeams!: Phaser.Physics.Arcade.Group;
 
   create(): void {
     this.resetSceneState();
@@ -52,6 +55,7 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     this.drawBackground();
     this.enemies = this.physics.add.group();
     this.collectibles = this.physics.add.group({ allowGravity: false, immovable: true });
+    this.playerBeams = this.physics.add.group({ allowGravity: false });
     this.platforms = this.spec.platforms.map((p) => new Platform(this, p, this.spec.theme.ground));
     this.hazards = this.spec.hazards.map((h) => new Hazard(this, h.x, h.y, h.w, h.h, h.type));
     this.checkpoint = new Checkpoint(this, this.spec.checkpoint.x, this.spec.checkpoint.y);
@@ -60,12 +64,21 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
     this.hud = new HUD(this);
     this.toast = new DialogToast(this);
+    new TouchControls(this, {
+      moveLeft: (active) => this.player.setTouchMove('left', active),
+      moveRight: (active) => this.player.setTouchMove('right', active),
+      jump: (active) => this.player.setTouchJump(active),
+      attack: () => this.player.requestAttack(),
+      dash: () => this.player.requestDash(),
+      beam: () => this.fireChipBeam()
+    });
     this.toast.show(this.levelId === 1 ? 'Warning: excessive confidence.' : this.levelId === 2 ? 'The manual said not to do that.' : 'Loose wires, loose plans.');
     this.spawnEnemies();
     this.spawnCollectibles();
     this.wirePhysics();
     this.input.keyboard!.on('keydown-ESC', () => this.togglePause());
     this.input.keyboard!.on('keydown-R', () => this.retryFromCheckpoint());
+    this.input.keyboard!.on('keydown-U', () => this.fireChipBeam());
   }
 
   private resetSceneState(): void {
@@ -78,11 +91,12 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     this.pausePanel = undefined;
     this.paused = false;
     this.lastBossHitAt = 0;
+    this.completingLevel = false;
     this.chips = 0;
   }
 
   update(time: number): void {
-    if (this.paused) return;
+    if (this.paused || this.completingLevel) return;
     this.platforms.forEach((platform) => platform.tick(time));
     this.enemies.children.each((child) => {
       if (child.active) (child as Enemy).tick(time, this.player);
@@ -157,6 +171,7 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     });
     this.physics.add.overlap(this.player, this.enemies, (_, enemy) => this.touchEnemy(enemy as Enemy));
     this.physics.add.overlap(this.player.attackBox, this.enemies, (_, enemy) => this.attackEnemy(enemy as Enemy));
+    this.physics.add.overlap(this.playerBeams, this.enemies, (beam, enemy) => this.beamEnemy(beam as Phaser.GameObjects.Rectangle, enemy as Enemy));
   }
 
   private platformTouch(platform: Platform): void {
@@ -210,6 +225,12 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     if (defeated) this.player.score += enemy.scoreValue;
   }
 
+  private beamEnemy(beam: Phaser.GameObjects.Rectangle, enemy: Enemy): void {
+    const defeated = enemy.hurt(Number(beam.getData('damage') ?? 2));
+    if (defeated) this.player.score += enemy.scoreValue;
+    beam.destroy();
+  }
+
   private hitHazard(hazard: Hazard): void {
     if (!hazard.armed) return;
     if (hazard.hazardType === 'explosive') {
@@ -240,6 +261,10 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     this.boss = this.spec.theme.boss === 'diode' ? new DiscoDiode(this, x, y) : this.spec.theme.boss === 'overcharge' ? new CaptainOvercharge(this, x, y) : new LooseConnection(this, x, y - 60);
     this.platforms.forEach((platform) => this.physics.add.collider(this.boss!, platform));
     this.physics.add.overlap(this.player.attackBox, this.boss, () => this.hitBoss());
+    this.physics.add.overlap(this.playerBeams, this.boss, (beam) => {
+      beam.destroy();
+      this.hitBoss(2);
+    });
     this.physics.add.overlap(this.player, this.boss, () => this.touchBoss());
     this.audio.boss();
     this.showBossTitle(this.boss.title);
@@ -258,17 +283,40 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     }
   }
 
-  private hitBoss(): void {
+  private hitBoss(damage = 1): void {
     if (!this.boss?.active || this.boss.defeated) return;
     if (this.time.now - this.lastBossHitAt < 260) return;
     this.lastBossHitAt = this.time.now;
-    const defeated = this.boss.hurt(this.player.powerUp === 'Solder Sword' ? 2 : 1);
+    const defeated = this.boss.hurt(this.player.powerUp === 'Solder Sword' ? Math.max(2, damage) : damage);
     if (defeated) {
       this.player.score += 1000;
       this.bossBar?.destroy();
       this.bossBarBack?.destroy();
-      this.time.delayedCall(900, () => this.scene.start('LevelCompleteScene', { level: this.levelId, score: this.player.score, chips: Math.min(3, this.chips) }));
+      this.completeLevelSoon();
     }
+  }
+
+  private fireChipBeam(): void {
+    if (this.paused || this.completingLevel) return;
+    if (this.chips < 3) {
+      this.toast.show('Find all 3 debug chips to unlock BEAM.');
+      return;
+    }
+    const beam = this.player.fireChipBeam();
+    if (beam) {
+      this.playerBeams.add(beam);
+      floatingText(this, this.player.x, this.player.y - 28, 'BEAM', '#45c4ff');
+    }
+  }
+
+  private completeLevelSoon(): void {
+    if (this.completingLevel) return;
+    this.completingLevel = true;
+    this.resetBossObjects();
+    this.physics.pause();
+    this.time.delayedCall(650, () => {
+      this.scene.start('LevelCompleteScene', { level: this.levelId, score: this.player.score, chips: Math.min(3, this.chips) });
+    });
   }
 
   private updateBossBar(): void {
@@ -315,10 +363,13 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     this.bossBar = undefined;
     this.bossBarBack?.destroy();
     this.bossBarBack = undefined;
+    this.resetBossObjects();
+  }
 
+  private resetBossObjects(): void {
     this.children.each((child) => {
       const obj = child as Phaser.GameObjects.GameObject & { getData?: (key: string) => unknown; active: boolean; destroy: () => void };
-      if (obj.active && (obj.getData?.('projectile') || obj.getData?.('bossObject'))) obj.destroy();
+      if (obj.active && (obj.getData?.('projectile') || obj.getData?.('bossObject') || obj.getData?.('playerBeam'))) obj.destroy();
       return true;
     });
   }
