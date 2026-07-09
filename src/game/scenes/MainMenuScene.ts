@@ -21,7 +21,7 @@ export class MainMenuScene extends Phaser.Scene {
     this.add.text(GAME_WIDTH / 2, 138, 'Debug Quest', { fontFamily: 'monospace', fontSize: '34px', color: '#45c4ff' }).setOrigin(0.5);
     this.add.text(GAME_WIDTH / 2, 184, 'Debug first, ask questions later.', { fontFamily: 'monospace', fontSize: '18px', color: '#f7fff7' }).setOrigin(0.5);
     this.add.text(GAME_WIDTH / 2, 212, `Current hero: ${character.name}`, { fontFamily: 'monospace', fontSize: '16px', color: '#9bd7e8' }).setOrigin(0.5);
-    new Button(this, GAME_WIDTH / 2, 244, 'Start Game', () => this.scene.start('CharacterSelectScene', { nextScene: 'Level1Scene' }));
+    new Button(this, GAME_WIDTH / 2, 244, 'Start Game', () => this.scene.start('Level1Scene'));
     new Button(this, GAME_WIDTH / 2, 290, 'Level Select', () => this.scene.start('LevelSelectScene'));
     new Button(this, GAME_WIDTH / 2, 336, 'Change Character', () => this.scene.start('CharacterSelectScene', { nextScene: 'LevelSelectScene' }));
     new Button(this, GAME_WIDTH / 2, 382, 'Controls', () => this.showControls());

@@ -1,13 +1,13 @@
 import Phaser from 'phaser';
 
 export class Button extends Phaser.GameObjects.Container {
-  constructor(scene: Phaser.Scene, x: number, y: number, text: string, onClick: () => void, width = 260) {
+  constructor(scene: Phaser.Scene, x: number, y: number, text: string, onClick: () => void, width = 260, fontSize = '20px') {
     super(scene, x, y);
     this.setDepth(5);
     const bg = scene.add.rectangle(0, 0, width, 44, 0x12242d, 0.96).setStrokeStyle(2, 0x45c4ff);
     const label = scene.add.text(0, 0, text, {
       fontFamily: 'monospace',
-      fontSize: '20px',
+      fontSize,
       color: '#f7fff7'
     }).setOrigin(0.5);
     this.add([bg, label]);

@@ -29,7 +29,7 @@ export class LevelCompleteScene extends Phaser.Scene {
       align: 'center',
       lineSpacing: 7
     }).setOrigin(0.5);
-    if (data.level < 3) new Button(this, 480, 356, 'Continue', () => this.scene.start('CharacterSelectScene', { nextScene: `Level${data.level + 1}Scene` }));
+    if (data.level < 3) new Button(this, 480, 356, 'Continue', () => this.scene.start(`Level${data.level + 1}Scene`));
     else new Button(this, 480, 356, 'Level Select', () => this.scene.start('LevelSelectScene'));
     new Button(this, 300, 424, 'Retry', () => this.scene.start(`Level${data.level}Scene`), 190);
     new Button(this, 660, 424, 'Level Select', () => this.scene.start('LevelSelectScene'), 230);

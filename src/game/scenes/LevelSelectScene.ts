@@ -4,15 +4,15 @@ import { SaveSystem } from '../systems/SaveSystem';
 import { getCharacterConfig } from '../characters';
 
 const LEVELS = [
-  'LED Carnival',
-  'Battery Badlands',
-  'Breadboard Bazaar',
-  'Logic Gate Lab',
-  'Capacitor Sky City',
-  'Relay Robot Factory',
-  'Wi-Fi Jungle',
-  'Thermal Reactor',
-  'Glitch Core Citadel'
+  { name: 'LED Carnival', shortName: 'LED Carnival' },
+  { name: 'Battery Badlands', shortName: 'Battery Badlands' },
+  { name: 'Breadboard Bazaar', shortName: 'Breadboard Bazaar' },
+  { name: 'Logic Gate Lab', shortName: 'Logic Gate Lab' },
+  { name: 'Capacitor Sky City', shortName: 'Capacitor Sky' },
+  { name: 'Relay Robot Factory', shortName: 'Relay Factory' },
+  { name: 'Wi-Fi Jungle', shortName: 'Wi-Fi Jungle' },
+  { name: 'Thermal Reactor', shortName: 'Thermal Reactor' },
+  { name: 'Glitch Core Citadel', shortName: 'Glitch Core' }
 ];
 
 export class LevelSelectScene extends Phaser.Scene {
@@ -30,20 +30,20 @@ export class LevelSelectScene extends Phaser.Scene {
       color: '#f7fff7'
     }).setOrigin(0.5);
 
-    LEVELS.forEach((name, index) => {
+    LEVELS.forEach((levelInfo, index) => {
       const level = index + 1;
       const implemented = level <= 3;
       const unlocked = level === 1 || save.completedLevels.includes(level - 1);
-      const done = save.completedLevels.includes(level) ? '[Fixed]' : unlocked && implemented ? '[Open]' : '[Locked]';
+      const state = save.completedLevels.includes(level) ? 'Fixed' : unlocked && implemented ? 'Open' : 'Locked';
       const chips = save.debugChips[String(level)]?.length ?? 0;
-      const label = `${level}. ${name} ${done}  Chips ${chips}/3`;
-      const x = index < 5 ? 270 : 690;
+      const label = `${level}. ${levelInfo.shortName}  ${state}  ${chips}/3`;
+      const x = index < 5 ? 260 : 700;
       const y = 138 + (index % 5) * 58;
       const play = () => {
-        if (implemented && unlocked) this.scene.start('CharacterSelectScene', { nextScene: `Level${level}Scene` });
+        if (implemented && unlocked) this.scene.start(`Level${level}Scene`);
         else this.showLocked(level, implemented);
       };
-      new Button(this, x, y, label, play, 390);
+      new Button(this, x, y, label, play, 360, '15px');
     });
     new Button(this, 300, 486, 'Change Character', () => this.scene.start('CharacterSelectScene', { nextScene: 'LevelSelectScene' }), 260);
     new Button(this, 660, 486, 'Back', () => this.scene.start('MainMenuScene'), 180);
