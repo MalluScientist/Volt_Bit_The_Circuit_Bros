@@ -25,6 +25,7 @@ export class PreloadScene extends Phaser.Scene {
     this.rectTexture('boss-diode', 64, 72, 0xff3e5f, 0xffe05d);
     this.rectTexture('boss-overcharge', 68, 76, 0x8a7a33, 0xff3e5f);
     this.rectTexture('boss-loose', 64, 70, 0xe7e0c7, 0x8e6bff);
+    this.rectTexture('boss-nand', 68, 74, 0x102530, 0x45c4ff);
     this.rectTexture('coin', 14, 14, 0xffe05d, 0xf3a33a);
     this.rectTexture('cell', 18, 24, 0x45c4ff, 0xffe05d);
     this.rectTexture('chip', 18, 18, 0x159947, 0xf7fff7);

@@ -19,7 +19,8 @@ This file preserves working context for future Codex sessions in this repository
   - Level 3: `Breadboard Bazaar`
 - Core systems include platforming, enemies, hazards, collectibles, checkpoints, mini bosses, HUD, menus, touch controls, generated placeholder art, and Web Audio generated sound effects.
 - Volt and Bit are now separate selectable characters backed by shared character configs. Volt is faster with lower health; Bit is slower with more health and stronger attacks.
-- Level select lists the planned 9-level campaign, but only Levels 1-3 are implemented after the Milestone 1/2 pass.
+- Level select lists the planned 9-level campaign. Levels 1-4 are implemented; Levels 5-9 remain locked future entries.
+- Milestone 3 foundation is present: `src/game/data/campaign.ts` defines the 9-level campaign catalog, and `ProgressionSystem` centralizes level unlock state, chip counts, and Clock Shard display.
 - Current art is code-generated placeholder pixel-style art.
 - No paid assets, copyrighted sprites, music, Nintendo names, or Nintendo assets are used.
 
@@ -70,7 +71,7 @@ Screenshots and issue captures are kept in `screenshots/`.
 
 ## Notes For Future Work
 
-- Next intended work is Milestone 3: shared systems for expansion, locked progression polish, Clock Shard/upgrades display, and cleaner patterns for adding levels 4-9.
+- Next intended work is continuing Milestone 4: add Capacitor Sky City and its boss using the campaign/progression foundations.
 - Keep the first-screen game experience focused on playability, not marketing copy.
 - Preserve the existing Vite / Phaser / TypeScript structure unless there is a concrete reason to change it.
 - Programmatic levels and placeholder art are known prototype limitations.

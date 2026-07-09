@@ -1,5 +1,6 @@
 import { SaveData } from '../types';
 import { CharacterId, getCharacterConfig } from '../characters';
+import { MAIN_CLOCK_SHARD_COUNT } from '../data/campaign';
 
 const KEY = 'circuit-bros-save-v1';
 
@@ -52,7 +53,7 @@ export class SaveSystem {
   static completeLevel(level: number, score: number): void {
     const data = SaveSystem.load();
     if (!data.completedLevels.includes(level)) data.completedLevels.push(level);
-    if (!data.clockShards.includes(level)) data.clockShards.push(level);
+    if (level <= MAIN_CLOCK_SHARD_COUNT && !data.clockShards.includes(level)) data.clockShards.push(level);
     data.highScore = Math.max(data.highScore, score);
     SaveSystem.unlockMilestoneRewards(data, level);
     SaveSystem.save(data);

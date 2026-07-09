@@ -2,11 +2,12 @@
 
 A small browser game prototype for itch.io: a fun-first retro 2D action platformer set in a bright electronics fantasy world. Choose between Volt, a fast reckless solder-sword hero, and Bit, a sturdier brother with a heavier debug tool.
 
-The demo includes three short original levels:
+The demo includes four short original levels:
 
 - Level 1: LED Carnival
 - Level 2: Battery Badlands
 - Level 3: Breadboard Bazaar
+- Level 4: Logic Gate Lab
 
 Each level has platforming, enemies, hazards, collectibles, a checkpoint, hidden debug chips, and a mini boss.
 
@@ -14,7 +15,8 @@ Each level has platforming, enemies, hazards, collectibles, a checkpoint, hidden
 
 - Milestone 1 complete: character configs, Volt/Bit selection, save migration, HUD/menu flow, and both characters playable in the existing levels.
 - Milestone 2 complete: current three-level polish pass with stronger boss feedback, improved level-complete summary, dialogue, checkpoint polish, and mobile touch control improvements.
-- Levels 4-9 are listed in level select as future locked campaign entries and should be added after the current prototype remains stable.
+- Milestone 3 foundation complete: shared campaign metadata and progression helpers for level select, Clock Shards, rewards, and future level unlocks.
+- Level 4 is playable after completing Level 3. Levels 5-9 are listed in level select as future locked campaign entries.
 
 ## Controls
 

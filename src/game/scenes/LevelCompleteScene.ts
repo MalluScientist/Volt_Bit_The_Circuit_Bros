@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { Button } from '../ui/Button';
 import { SaveSystem } from '../systems/SaveSystem';
 import { AudioSystem } from '../systems/AudioSystem';
+import { getCampaignLevel } from '../data/campaign';
+import { ProgressionSystem } from '../systems/ProgressionSystem';
 
 export class LevelCompleteScene extends Phaser.Scene {
   constructor() {
@@ -12,15 +14,17 @@ export class LevelCompleteScene extends Phaser.Scene {
     SaveSystem.completeLevel(data.level, data.score);
     new AudioSystem().complete();
     const save = SaveSystem.load();
+    const level = getCampaignLevel(data.level);
+    const nextLevel = getCampaignLevel(data.level + 1);
     this.add.text(480, 78, 'Continuity restored!', { fontFamily: 'monospace', fontSize: '40px', color: '#77ff4f' }).setOrigin(0.5);
     this.add.text(480, 176, [
-      data.levelName ?? `Level ${data.level}`,
+      data.levelName ?? `Level ${data.level}: ${level.name}`,
       `Hero: ${data.characterName ?? 'Circuit Bro'}`,
       `Debug points: ${data.score}`,
       `Spark Coins: ${data.coins ?? 0}`,
       `Debug Chips: ${data.chips}/3`,
-      data.clockShardEarned ? `Clock Shard ${data.level} recovered` : 'Clock Shard pending',
-      `Total Clock Shards: ${save.clockShards.length}/8`,
+      data.clockShardEarned ? `${level.reward} recovered` : `${level.reward} pending`,
+      `Total Clock Shards: ${ProgressionSystem.shardText(save)}`,
       'Root cause analysis pending.'
     ].join('\n'), {
       fontFamily: 'monospace',
@@ -29,7 +33,7 @@ export class LevelCompleteScene extends Phaser.Scene {
       align: 'center',
       lineSpacing: 7
     }).setOrigin(0.5);
-    if (data.level < 3) new Button(this, 480, 356, 'Continue', () => this.scene.start(`Level${data.level + 1}Scene`));
+    if (nextLevel.implemented && nextLevel.sceneKey) new Button(this, 480, 356, 'Continue', () => this.scene.start(nextLevel.sceneKey));
     else new Button(this, 480, 356, 'Level Select', () => this.scene.start('LevelSelectScene'));
     new Button(this, 300, 424, 'Retry', () => this.scene.start(`Level${data.level}Scene`), 190);
     new Button(this, 660, 424, 'Level Select', () => this.scene.start('LevelSelectScene'), 230);

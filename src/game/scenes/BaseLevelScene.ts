@@ -22,13 +22,15 @@ import { Boss } from '../objects/Boss';
 import { DiscoDiode } from '../objects/DiscoDiode';
 import { CaptainOvercharge } from '../objects/CaptainOvercharge';
 import { LooseConnection } from '../objects/LooseConnection';
+import { NandKnight } from '../objects/NandKnight';
 import { LevelSpec } from '../types';
 
 const BOSS_BAR_WIDTH = 356;
 const BOSS_LINES: Record<number, string> = {
   1: 'Behold my full brightness mode!',
   2: 'I am fully charged and emotionally unstable!',
-  3: 'You cannot hit what you cannot connect!'
+  3: 'You cannot hit what you cannot connect!',
+  4: 'My shield logic is flawless. Probably.'
 };
 
 export abstract class BaseLevelScene extends Phaser.Scene {
@@ -86,7 +88,7 @@ export abstract class BaseLevelScene extends Phaser.Scene {
       pause: () => this.togglePause()
     });
     this.toast.show(Phaser.Math.RND.pick(this.character.levelLines));
-    this.time.delayedCall(1800, () => this.toast.show(this.levelId === 1 ? 'Warning: confidence exceeds recommended limit.' : this.levelId === 2 ? 'Magic smoke probability increasing.' : 'Continuity restored. Somehow.'));
+    this.time.delayedCall(1800, () => this.toast.show(this.levelId === 1 ? 'Warning: confidence exceeds recommended limit.' : this.levelId === 2 ? 'Magic smoke probability increasing.' : this.levelId === 3 ? 'Continuity restored. Somehow.' : 'Recommendation: do not argue with logic gates.'));
     this.spawnEnemies();
     this.spawnCollectibles();
     this.wirePhysics();
@@ -122,6 +124,7 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     if (this.boss?.active && !this.boss.defeated) {
       this.boss.tick(time, this.player);
       this.constrainBossToArena();
+      this.processBossBeamHits();
       this.updateBossBar();
     }
     this.recoverBossEncounter();
@@ -278,7 +281,13 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     this.bossStarted = true;
     const x = this.spec.bossArenaX + 520;
     const y = 400;
-    this.boss = this.spec.theme.boss === 'diode' ? new DiscoDiode(this, x, y) : this.spec.theme.boss === 'overcharge' ? new CaptainOvercharge(this, x, y) : new LooseConnection(this, x, y - 60);
+    this.boss = this.spec.theme.boss === 'diode'
+      ? new DiscoDiode(this, x, y)
+      : this.spec.theme.boss === 'overcharge'
+        ? new CaptainOvercharge(this, x, y)
+        : this.spec.theme.boss === 'loose'
+          ? new LooseConnection(this, x, y - 60)
+          : new NandKnight(this, x, y - 10);
     this.platforms.forEach((platform) => this.physics.add.collider(this.boss!, platform));
     this.physics.add.overlap(this.player.attackBox, this.boss, () => this.hitBoss());
     this.physics.add.overlap(this.playerBeams, this.boss, (beam) => {
@@ -308,11 +317,23 @@ export abstract class BaseLevelScene extends Phaser.Scene {
   private beamBoss(beam: Phaser.GameObjects.Rectangle): void {
     if (!beam.active || beam.getData('spent')) return;
     beam.setData('spent', true);
-    if (this.hitBoss(Number(beam.getData('damage') ?? 2), 0)) {
-      burst(this, beam.x, beam.y, 0x45c4ff, 14);
+    const damage = Number(beam.getData('damage') ?? this.player.character.beamDamage);
+    if (this.hitBoss(damage, 0)) {
+      burst(this, beam.x, beam.y, this.player.character.accent, 14);
       this.cameras.main.shake(70, 0.003);
     }
     beam.destroy();
+  }
+
+  private processBossBeamHits(): void {
+    if (!this.boss?.active || this.boss.defeated) return;
+    this.playerBeams.children.each((child) => {
+      const beam = child as Phaser.GameObjects.Rectangle;
+      if (beam.active && !beam.getData('spent') && this.physics.overlap(beam, this.boss!)) {
+        this.beamBoss(beam);
+      }
+      return true;
+    });
   }
 
   private hitBoss(damage = 1, cooldownMs = 260): boolean {
@@ -397,7 +418,7 @@ export abstract class BaseLevelScene extends Phaser.Scene {
 
   private showBossTitle(title: string): void {
     const label = this.add.text(480, 126, title, { fontFamily: 'monospace', fontSize: '34px', color: '#ffe05d', stroke: '#07131b', strokeThickness: 6 }).setOrigin(0.5).setScrollFactor(0).setDepth(120);
-    const line = this.add.text(480, 172, BOSS_LINES[this.levelId], { fontFamily: 'monospace', fontSize: '17px', color: '#f7fff7', stroke: '#07131b', strokeThickness: 4 }).setOrigin(0.5).setScrollFactor(0).setDepth(120);
+    const line = this.add.text(480, 172, BOSS_LINES[this.levelId] ?? 'Your patch notes are meaningless!', { fontFamily: 'monospace', fontSize: '17px', color: '#f7fff7', stroke: '#07131b', strokeThickness: 4 }).setOrigin(0.5).setScrollFactor(0).setDepth(120);
     this.tweens.add({ targets: label, alpha: 0, delay: 1300, duration: 550, onComplete: () => label.destroy() });
     this.tweens.add({ targets: line, alpha: 0, delay: 1550, duration: 550, onComplete: () => line.destroy() });
   }

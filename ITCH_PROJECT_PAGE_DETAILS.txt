@@ -63,10 +63,10 @@ Suggested Description
 ---------------------
 Circuit Bros: Debug Quest is a retro 2D action platformer set inside a bright electronics fantasy world.
 
-Choose between Volt, the fast reckless brother with a quick solder-sword slash, and Bit, the sturdier practical brother with a heavier debug tool. Jump across circuit-board platforms, dodge hazards, collect debug chips, fight strange electronic enemies, recover Clock Shards, and restore continuity across three short levels.
+Choose between Volt, the fast reckless brother with a quick solder-sword slash, and Bit, the sturdier practical brother with a heavier debug tool. Jump across circuit-board platforms, dodge hazards, collect debug chips, fight strange electronic enemies, recover Clock Shards, and restore continuity across four short levels.
 
 This prototype includes:
-- 3 playable levels
+- 4 playable levels
 - Platforming, enemies, hazards, and collectibles
 - Checkpoints
 - Hidden debug chips

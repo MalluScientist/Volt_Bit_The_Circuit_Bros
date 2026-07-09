@@ -42,7 +42,7 @@ export interface LevelTheme {
   ground: number;
   accent: number;
   sky: number;
-  boss: 'diode' | 'overcharge' | 'loose';
+  boss: 'diode' | 'overcharge' | 'loose' | 'nand';
 }
 
 export interface PlatformSpec {
