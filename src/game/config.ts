@@ -4,6 +4,7 @@ import { BootScene } from './scenes/BootScene';
 import { PreloadScene } from './scenes/PreloadScene';
 import { StoryScene } from './scenes/StoryScene';
 import { MainMenuScene } from './scenes/MainMenuScene';
+import { CharacterSelectScene } from './scenes/CharacterSelectScene';
 import { LevelSelectScene } from './scenes/LevelSelectScene';
 import { Level1Scene } from './scenes/Level1Scene';
 import { Level2Scene } from './scenes/Level2Scene';
@@ -39,6 +40,7 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     PreloadScene,
     StoryScene,
     MainMenuScene,
+    CharacterSelectScene,
     LevelSelectScene,
     Level1Scene,
     Level2Scene,

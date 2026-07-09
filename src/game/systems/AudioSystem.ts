@@ -97,4 +97,20 @@ export class AudioSystem {
     this.beep(120, 0.18, 'sawtooth', 0.06);
     setTimeout(() => this.beep(90, 0.18, 'sawtooth', 0.06), 130);
   }
+
+  bossHit(): void {
+    this.beep(260, 0.05, 'sawtooth', 0.045);
+  }
+
+  bossDefeat(): void {
+    this.beep(220, 0.08, 'triangle', 0.05);
+    setTimeout(() => this.beep(440, 0.08, 'triangle', 0.05), 90);
+    setTimeout(() => this.beep(880, 0.12, 'triangle', 0.05), 180);
+  }
+
+  complete(): void {
+    this.beep(660, 0.07, 'square', 0.04);
+    setTimeout(() => this.beep(880, 0.08, 'square', 0.04), 90);
+    setTimeout(() => this.beep(1320, 0.12, 'triangle', 0.04), 190);
+  }
 }

@@ -8,6 +8,8 @@ export interface HudState {
   coins: number;
   score: number;
   levelName: string;
+  characterName: string;
+  characterColor: number;
   powerUp: PowerUpType;
   chips: number;
 }
@@ -35,11 +37,14 @@ export class HUD {
   }
 
   update(state: HudState): void {
-    this.hearts.forEach((cell, index) => cell.setFillStyle(index < state.health ? 0xffe05d : 0x1c3c48));
+    this.hearts.forEach((cell, index) => {
+      cell.setVisible(index < state.maxHealth);
+      cell.setFillStyle(index < state.health ? state.characterColor : 0x1c3c48);
+    });
     this.dashBar.width = Phaser.Math.Clamp(state.dashRatio, 0, 1) * 90;
     this.coinText.setText(`Sparks ${state.coins}`);
     this.scoreText.setText(`Debug ${state.score}`);
-    this.levelText.setText(state.levelName);
+    this.levelText.setText(`${state.characterName} - ${state.levelName}`);
     this.powerText.setText(`Tool ${state.powerUp}  Chips ${state.chips}/3`);
   }
 

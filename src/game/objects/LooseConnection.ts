@@ -31,5 +31,20 @@ export class LooseConnection extends Boss {
     const platform = new Platform(this.scene, { x: socket.x, y: socket.y + 20, w: 86, h: 14, kind: 'glitch' }, 0x8e6bff);
     platform.setData('bossObject', true);
     this.scene.time.delayedCall(1400, () => platform.destroy());
+    if (this.phase >= 3) this.spawnGlitchClone(socket);
+  }
+
+  private spawnGlitchClone(socket: Phaser.Math.Vector2): void {
+    const clone = this.scene.add.rectangle(socket.x + Phaser.Math.RND.pick([-92, 92]), socket.y, 46, 50, 0x8e6bff, 0.35).setStrokeStyle(2, 0xf7fff7, 0.4);
+    this.scene.physics.add.existing(clone);
+    const body = clone.body as Phaser.Physics.Arcade.Body;
+    body.setAllowGravity(false);
+    body.setVelocityX(clone.x < this.x ? -120 : 120);
+    clone.setData('projectile', true);
+    clone.setData('bossObject', true);
+    clone.setData('damage', 1);
+    this.scene.time.delayedCall(1100, () => {
+      if (clone.active) clone.destroy();
+    });
   }
 }

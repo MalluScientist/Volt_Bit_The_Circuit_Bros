@@ -4,7 +4,7 @@ Circuit Bros: Debug Quest - itch.io Project Page Details
 Upload File
 -----------
 Use this zip file:
-volt-bit-itch.zip
+volt-bit-itch-milestone-2.zip
 
 The zip should contain index.html at the root, plus the assets folder.
 
@@ -63,14 +63,16 @@ Suggested Description
 ---------------------
 Circuit Bros: Debug Quest is a retro 2D action platformer set inside a bright electronics fantasy world.
 
-Play as Volt, a tiny engineer-adventurer with goggles, a tool belt, and a cartoony solder slash. Jump across circuit-board platforms, dodge hazards, collect debug chips, fight strange electronic enemies, and restore continuity across three short levels.
+Choose between Volt, the fast reckless brother with a quick solder-sword slash, and Bit, the sturdier practical brother with a heavier debug tool. Jump across circuit-board platforms, dodge hazards, collect debug chips, fight strange electronic enemies, recover Clock Shards, and restore continuity across three short levels.
 
 This prototype includes:
 - 3 playable levels
 - Platforming, enemies, hazards, and collectibles
 - Checkpoints
 - Hidden debug chips
+- Character select with Volt and Bit
 - Mini bosses
+- Touch controls
 - Original code-generated placeholder pixel-style art
 - Simple generated sound effects using the Web Audio API
 
@@ -94,6 +96,9 @@ R
 
 Pause:
 Esc
+
+Touch devices:
+On-screen move, jump, attack, dash, beam, and pause buttons
 
 
 Levels
@@ -144,4 +149,4 @@ Known Prototype Limitations
 - Art and animation are placeholder-quality and intended to be replaced.
 - Levels are programmatic rather than tilemap-authored.
 - Enemy and boss AI are intentionally simple for a first playable demo.
-- There is no mobile/touch control layer yet.
+- Mobile/touch controls are implemented, but should be tested on target phones and tablets before upload.

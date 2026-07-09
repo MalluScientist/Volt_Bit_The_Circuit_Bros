@@ -1,6 +1,6 @@
 # Circuit Bros: Debug Quest
 
-A small browser game prototype for itch.io: a fun-first retro 2D action platformer set in a bright electronics fantasy world. Play as Volt, a tiny engineer-adventurer with goggles, a tool belt, and a cartoony solder slash.
+A small browser game prototype for itch.io: a fun-first retro 2D action platformer set in a bright electronics fantasy world. Choose between Volt, a fast reckless solder-sword hero, and Bit, a sturdier brother with a heavier debug tool.
 
 The demo includes three short original levels:
 
@@ -9,6 +9,12 @@ The demo includes three short original levels:
 - Level 3: Breadboard Bazaar
 
 Each level has platforming, enemies, hazards, collectibles, a checkpoint, hidden debug chips, and a mini boss.
+
+## Current Milestone Status
+
+- Milestone 1 complete: character configs, Volt/Bit selection, save migration, HUD/menu flow, and both characters playable in the existing levels.
+- Milestone 2 complete: current three-level polish pass with stronger boss feedback, improved level-complete summary, dialogue, checkpoint polish, and mobile touch control improvements.
+- Levels 4-9 are listed in level select as future locked campaign entries and should be added after the current prototype remains stable.
 
 ## Controls
 
@@ -20,7 +26,14 @@ Each level has platforming, enemies, hazards, collectibles, a checkpoint, hidden
 - Debug Beam: `U` after collecting all 3 debug chips in a level
 - Restart from checkpoint: `R`
 - Pause: `Esc`
-- Touch devices: on-screen move, jump, attack, dash, and beam buttons
+- Touch devices: on-screen move, jump, attack, dash, beam, and pause buttons
+
+## Characters
+
+- Volt: higher speed, stronger dash mobility, faster attack timing, 3 health.
+- Bit: slower movement, 4 health, stronger attack and chip beam, heavier timing.
+
+The selected character is saved in `localStorage` and can be changed from the main menu or level select.
 
 ## Run Locally
 
@@ -60,5 +73,5 @@ All current art is original generated placeholder pixel-style art made in code. 
 
 - Art and animation are placeholder-quality and intended to be replaced.
 - Levels are programmatic rather than tilemap-authored.
-- Enemy and boss AI are intentionally simple for a first playable demo.
-- There is no mobile/touch control layer yet.
+- Enemy and boss AI are intentionally simple and should be expanded level by level.
+- Mobile controls are present, but should still be tested on real devices before upload.

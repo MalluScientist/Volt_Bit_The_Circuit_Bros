@@ -18,6 +18,8 @@ This file preserves working context for future Codex sessions in this repository
   - Level 2: `Battery Badlands`
   - Level 3: `Breadboard Bazaar`
 - Core systems include platforming, enemies, hazards, collectibles, checkpoints, mini bosses, HUD, menus, touch controls, generated placeholder art, and Web Audio generated sound effects.
+- Volt and Bit are now separate selectable characters backed by shared character configs. Volt is faster with lower health; Bit is slower with more health and stronger attacks.
+- Level select lists the planned 9-level campaign, but only Levels 1-3 are implemented after the Milestone 1/2 pass.
 - Current art is code-generated placeholder pixel-style art.
 - No paid assets, copyrighted sprites, music, Nintendo names, or Nintendo assets are used.
 
@@ -43,12 +45,13 @@ Generated upload archives currently present:
 - `volt-bit-itch-beam-boss-fix.zip`
 - `volt-bit-itch-touch-menu-boss-recovery.zip`
 - `volt-bit-itch-boss-healthbar-fix.zip`
+- `volt-bit-itch-milestone-2.zip`
 
 Screenshots and issue captures are kept in `screenshots/`.
 
 ## Useful Publishing Details
 
-- Upload file: `volt-bit-itch.zip`
+- Upload file: `volt-bit-itch-milestone-2.zip`
 - Project type: HTML
 - Browser play: yes
 - Embed in page: yes
@@ -67,6 +70,7 @@ Screenshots and issue captures are kept in `screenshots/`.
 
 ## Notes For Future Work
 
+- Next intended work is Milestone 3: shared systems for expansion, locked progression polish, Clock Shard/upgrades display, and cleaner patterns for adding levels 4-9.
 - Keep the first-screen game experience focused on playability, not marketing copy.
 - Preserve the existing Vite / Phaser / TypeScript structure unless there is a concrete reason to change it.
 - Programmatic levels and placeholder art are known prototype limitations.

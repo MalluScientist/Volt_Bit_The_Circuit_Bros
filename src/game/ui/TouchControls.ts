@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { SaveSystem } from '../systems/SaveSystem';
 
 interface TouchControlCallbacks {
   moveLeft: (active: boolean) => void;
@@ -7,6 +8,7 @@ interface TouchControlCallbacks {
   attack: () => void;
   dash: () => void;
   beam: () => void;
+  pause: () => void;
 }
 
 interface ButtonVisual {
@@ -21,6 +23,17 @@ export class TouchControls {
     const enabled = scene.sys.game.device.input.touch || window.matchMedia('(pointer: coarse)').matches;
     if (!enabled) return;
 
+    const settings = SaveSystem.load().settings;
+    const scale = Phaser.Math.Clamp(settings.touchSize, 0.85, 1.35);
+    const opacity = Phaser.Math.Clamp(settings.touchOpacity, 0.35, 0.95);
+    const leftActions = settings.leftHandedTouch;
+    const moveX = leftActions ? 726 : 58;
+    const moveX2 = leftActions ? 824 : 156;
+    const actionX = leftActions ? 88 : 664;
+    const attackX = leftActions ? 198 : 774;
+    const dashX = leftActions ? 296 : 872;
+    const beamX = leftActions ? 296 : 872;
+
     scene.input.topOnly = false;
     scene.input.addPointer(6);
     const releasePointer = (pointer: Phaser.Input.Pointer) => this.releasePointer(pointer.id);
@@ -32,16 +45,17 @@ export class TouchControls {
       this.releaseAll();
     });
 
-    this.holdButton(scene, 58, 470, '<', 72, 52, 106, 90, () => callbacks.moveLeft(true), () => callbacks.moveLeft(false));
-    this.holdButton(scene, 156, 470, '>', 72, 52, 106, 90, () => callbacks.moveRight(true), () => callbacks.moveRight(false));
-    this.holdButton(scene, 664, 470, 'JUMP', 84, 54, 126, 92, () => callbacks.jump(true), () => callbacks.jump(false));
-    this.tapButton(scene, 774, 470, 'ATK', 72, 52, 108, 90, callbacks.attack);
-    this.tapButton(scene, 872, 470, 'DASH', 78, 52, 112, 90, callbacks.dash);
-    this.tapButton(scene, 872, 382, 'BEAM', 78, 46, 112, 78, callbacks.beam);
+    this.holdButton(scene, moveX, 470, '<', 72 * scale, 52 * scale, 118 * scale, 96 * scale, opacity, () => callbacks.moveLeft(true), () => callbacks.moveLeft(false));
+    this.holdButton(scene, moveX2, 470, '>', 72 * scale, 52 * scale, 118 * scale, 96 * scale, opacity, () => callbacks.moveRight(true), () => callbacks.moveRight(false));
+    this.holdButton(scene, actionX, 470, 'JUMP', 88 * scale, 56 * scale, 136 * scale, 100 * scale, opacity, () => callbacks.jump(true), () => callbacks.jump(false));
+    this.tapButton(scene, attackX, 470, 'ATK', 76 * scale, 54 * scale, 118 * scale, 96 * scale, opacity, callbacks.attack);
+    this.tapButton(scene, dashX, 470, 'DASH', 82 * scale, 54 * scale, 122 * scale, 96 * scale, opacity, callbacks.dash);
+    this.tapButton(scene, beamX, 382, 'BEAM', 82 * scale, 48 * scale, 122 * scale, 84 * scale, opacity, callbacks.beam);
+    this.tapButton(scene, 914, 46, 'II', 54 * scale, 42 * scale, 82 * scale, 70 * scale, opacity, callbacks.pause);
   }
 
-  private holdButton(scene: Phaser.Scene, x: number, y: number, label: string, width: number, height: number, hitWidth: number, hitHeight: number, onDown: () => void, onUp: () => void): void {
-    const visual = this.makeButton(scene, x, y, label, width, height);
+  private holdButton(scene: Phaser.Scene, x: number, y: number, label: string, width: number, height: number, hitWidth: number, hitHeight: number, opacity: number, onDown: () => void, onUp: () => void): void {
+    const visual = this.makeButton(scene, x, y, label, width, height, opacity);
     const zone = this.makeHitZone(scene, x, y, hitWidth, hitHeight);
     zone.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       this.releasePointer(pointer.id);
@@ -57,8 +71,8 @@ export class TouchControls {
     });
   }
 
-  private tapButton(scene: Phaser.Scene, x: number, y: number, label: string, width: number, height: number, hitWidth: number, hitHeight: number, onTap: () => void): void {
-    const visual = this.makeButton(scene, x, y, label, width, height);
+  private tapButton(scene: Phaser.Scene, x: number, y: number, label: string, width: number, height: number, hitWidth: number, hitHeight: number, opacity: number, onTap: () => void): void {
+    const visual = this.makeButton(scene, x, y, label, width, height, opacity);
     const zone = this.makeHitZone(scene, x, y, hitWidth, hitHeight);
     zone.on('pointerdown', () => {
       this.setPressed(visual, true);
@@ -69,8 +83,8 @@ export class TouchControls {
     zone.on('pointercancel', () => this.setPressed(visual, false));
   }
 
-  private makeButton(scene: Phaser.Scene, x: number, y: number, label: string, width: number, height: number): ButtonVisual {
-    const root = scene.add.container(x, y).setScrollFactor(0).setDepth(180).setAlpha(0.64);
+  private makeButton(scene: Phaser.Scene, x: number, y: number, label: string, width: number, height: number, opacity: number): ButtonVisual {
+    const root = scene.add.container(x, y).setScrollFactor(0).setDepth(180).setAlpha(opacity).setData('opacity', opacity);
     const bg = scene.add.rectangle(0, 0, width, height, 0x07131b, 0.5).setStrokeStyle(2, 0x45c4ff, 0.82);
     const text = scene.add.text(0, 0, label, {
       fontFamily: 'monospace',
@@ -89,7 +103,7 @@ export class TouchControls {
   }
 
   private setPressed(visual: ButtonVisual, pressed: boolean): void {
-    visual.root.setAlpha(pressed ? 0.95 : 0.64);
+    visual.root.setAlpha(pressed ? 0.95 : Number(visual.root.getData('opacity') ?? 0.64));
     visual.bg.setFillStyle(pressed ? 0x123447 : 0x07131b, pressed ? 0.74 : 0.5);
   }
 

@@ -30,6 +30,17 @@ export class CaptainOvercharge extends Boss {
         this.scene.cameras.main.shake(110, 0.006);
         this.scene.time.delayedCall(250, () => bomb.destroy());
       });
+      if (this.phase >= 3) this.electricFloor(player.x);
+    });
+  }
+
+  private electricFloor(targetX: number): void {
+    const zone = new Hazard(this.scene, targetX, 448, 150, 16, 'shock');
+    zone.setData('bossObject', true);
+    zone.setAlpha(0.25);
+    this.scene.tweens.add({ targets: zone, alpha: 0.88, scaleY: 1.35, yoyo: true, repeat: 3, duration: 120 });
+    this.scene.time.delayedCall(980, () => {
+      if (zone.active) zone.destroy();
     });
   }
 }

@@ -7,6 +7,7 @@ import { burst, floatingText } from '../systems/ParticleSystem';
 import { HUD } from '../ui/HUD';
 import { DialogToast } from '../ui/DialogToast';
 import { TouchControls } from '../ui/TouchControls';
+import { CharacterConfig, getCharacterConfig } from '../characters';
 import { Platform } from '../objects/Platform';
 import { Player } from '../objects/Player';
 import { AngryLED } from '../objects/AngryLED';
@@ -24,6 +25,11 @@ import { LooseConnection } from '../objects/LooseConnection';
 import { LevelSpec } from '../types';
 
 const BOSS_BAR_WIDTH = 356;
+const BOSS_LINES: Record<number, string> = {
+  1: 'Behold my full brightness mode!',
+  2: 'I am fully charged and emotionally unstable!',
+  3: 'You cannot hit what you cannot connect!'
+};
 
 export abstract class BaseLevelScene extends Phaser.Scene {
   protected abstract levelId: number;
@@ -47,10 +53,14 @@ export abstract class BaseLevelScene extends Phaser.Scene {
   private lastBossHitAt = 0;
   private completingLevel = false;
   private playerBeams!: Phaser.Physics.Arcade.Group;
+  private character!: CharacterConfig;
+  private bossPhaseText?: Phaser.GameObjects.Text;
+  private bossPhase = 1;
 
   create(): void {
     this.resetSceneState();
     this.spec = makeLevel(this.levelId);
+    this.character = getCharacterConfig(SaveSystem.selectedCharacter());
     this.physics.world.setBounds(0, 0, this.spec.width, GAME_HEIGHT + 220);
     this.cameras.main.setBounds(0, 0, this.spec.width, GAME_HEIGHT);
     this.cameras.main.setBackgroundColor(this.spec.theme.sky);
@@ -61,7 +71,7 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     this.platforms = this.spec.platforms.map((p) => new Platform(this, p, this.spec.theme.ground));
     this.hazards = this.spec.hazards.map((h) => new Hazard(this, h.x, h.y, h.w, h.h, h.type));
     this.checkpoint = new Checkpoint(this, this.spec.checkpoint.x, this.spec.checkpoint.y);
-    this.player = new Player(this, this.spec.start.x, this.spec.start.y, this.audio);
+    this.player = new Player(this, this.spec.start.x, this.spec.start.y, this.audio, this.character);
     this.player.checkpoint.copy(this.spec.start);
     this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
     this.hud = new HUD(this);
@@ -72,9 +82,11 @@ export abstract class BaseLevelScene extends Phaser.Scene {
       jump: (active) => this.player.setTouchJump(active),
       attack: () => this.player.requestAttack(),
       dash: () => this.player.requestDash(),
-      beam: () => this.fireChipBeam()
+      beam: () => this.fireChipBeam(),
+      pause: () => this.togglePause()
     });
-    this.toast.show(this.levelId === 1 ? 'Warning: excessive confidence.' : this.levelId === 2 ? 'The manual said not to do that.' : 'Loose wires, loose plans.');
+    this.toast.show(Phaser.Math.RND.pick(this.character.levelLines));
+    this.time.delayedCall(1800, () => this.toast.show(this.levelId === 1 ? 'Warning: confidence exceeds recommended limit.' : this.levelId === 2 ? 'Magic smoke probability increasing.' : 'Continuity restored. Somehow.'));
     this.spawnEnemies();
     this.spawnCollectibles();
     this.wirePhysics();
@@ -95,6 +107,8 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     this.lastBossHitAt = 0;
     this.completingLevel = false;
     this.chips = 0;
+    this.bossPhase = 1;
+    this.bossPhaseText = undefined;
   }
 
   update(time: number): void {
@@ -120,6 +134,8 @@ export abstract class BaseLevelScene extends Phaser.Scene {
       coins: this.player.coins,
       score: this.player.score,
       levelName: this.spec.theme.name,
+      characterName: this.character.name,
+      characterColor: this.character.color,
       powerUp: this.player.powerUp,
       chips: this.chips
     });
@@ -170,7 +186,8 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.checkpoint, () => {
       this.checkpoint.activate();
       this.player.checkpoint.copy(this.spec.checkpoint);
-      this.toast.show('Continuity checkpoint restored.');
+      if (SaveSystem.load().upgrades.checkpointReboot) this.player.heal(1);
+      this.toast.show('Checkpoint saved. Try not to explode.');
     });
     this.physics.add.overlap(this.player, this.enemies, (_, enemy) => this.touchEnemy(enemy as Enemy));
     this.physics.add.overlap(this.player.attackBox, this.enemies, (_, enemy) => this.attackEnemy(enemy as Enemy));
@@ -224,7 +241,7 @@ export abstract class BaseLevelScene extends Phaser.Scene {
   }
 
   private attackEnemy(enemy: Enemy): void {
-    const defeated = enemy.hurt(this.player.powerUp === 'Solder Sword' ? 2 : 1);
+    const defeated = enemy.hurt(this.player.powerUp === 'Solder Sword' ? this.player.character.attackDamage + 1 : this.player.character.attackDamage);
     if (defeated) this.player.score += enemy.scoreValue;
   }
 
@@ -272,6 +289,8 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     this.showBossTitle(this.boss.title);
     this.bossBarBack = this.add.rectangle(480, 60, 360, 16, 0x102530).setScrollFactor(0).setDepth(100).setStrokeStyle(2, 0xf7fff7);
     this.bossBar = this.add.rectangle(300, 60, BOSS_BAR_WIDTH, 10, 0xff3e5f).setOrigin(0, 0.5).setScrollFactor(0).setDepth(101);
+    this.bossPhase = 1;
+    this.bossPhaseText = this.add.text(480, 82, 'Phase 1', { fontFamily: 'monospace', fontSize: '14px', color: '#f7fff7' }).setOrigin(0.5).setScrollFactor(0).setDepth(101);
     this.updateBossBar();
   }
 
@@ -300,12 +319,15 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     if (!this.boss?.active || this.boss.defeated) return false;
     if (cooldownMs > 0 && this.time.now - this.lastBossHitAt < cooldownMs) return false;
     this.lastBossHitAt = this.time.now;
-    const defeated = this.boss.hurt(this.player.powerUp === 'Solder Sword' ? Math.max(2, damage) : damage);
+    const defeated = this.boss.hurt(this.player.powerUp === 'Solder Sword' ? Math.max(this.player.character.attackDamage + 1, damage) : damage);
+    this.audio.bossHit();
     this.updateBossBar();
     if (defeated) {
+      this.audio.bossDefeat();
       this.player.score += 1000;
       this.bossBar?.destroy();
       this.bossBarBack?.destroy();
+      this.bossPhaseText?.destroy();
       this.completeLevelSoon();
     }
     return true;
@@ -341,7 +363,15 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     this.resetBossObjects();
     this.physics.pause();
     this.time.delayedCall(650, () => {
-      this.scene.start('LevelCompleteScene', { level: this.levelId, score: this.player.score, chips: Math.min(3, this.chips) });
+      this.scene.start('LevelCompleteScene', {
+        level: this.levelId,
+        levelName: this.spec.theme.name,
+        characterName: this.character.name,
+        score: this.player.score,
+        coins: this.player.coins,
+        chips: Math.min(3, this.chips),
+        clockShardEarned: true
+      });
     });
   }
 
@@ -349,6 +379,12 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     if (!this.boss || !this.bossBar) return;
     const ratio = Phaser.Math.Clamp(this.boss.health / this.boss.maxHealth, 0, 1);
     this.bossBar.setScale(ratio, 1);
+    const phase = ratio <= 1 / 3 ? 3 : ratio <= 2 / 3 ? 2 : 1;
+    if (phase !== this.bossPhase) {
+      this.bossPhase = phase;
+      this.bossPhaseText?.setText(`Phase ${phase}`);
+      this.toast.show(phase === 2 ? 'Recommendation: dodge.' : 'Magic smoke probability increasing.');
+    }
   }
 
   private constrainBossToArena(): void {
@@ -361,7 +397,9 @@ export abstract class BaseLevelScene extends Phaser.Scene {
 
   private showBossTitle(title: string): void {
     const label = this.add.text(480, 126, title, { fontFamily: 'monospace', fontSize: '34px', color: '#ffe05d', stroke: '#07131b', strokeThickness: 6 }).setOrigin(0.5).setScrollFactor(0).setDepth(120);
+    const line = this.add.text(480, 172, BOSS_LINES[this.levelId], { fontFamily: 'monospace', fontSize: '17px', color: '#f7fff7', stroke: '#07131b', strokeThickness: 4 }).setOrigin(0.5).setScrollFactor(0).setDepth(120);
     this.tweens.add({ targets: label, alpha: 0, delay: 1300, duration: 550, onComplete: () => label.destroy() });
+    this.tweens.add({ targets: line, alpha: 0, delay: 1550, duration: 550, onComplete: () => line.destroy() });
   }
 
   private killPlayer(): void {
@@ -390,6 +428,8 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     this.bossBar = undefined;
     this.bossBarBack?.destroy();
     this.bossBarBack = undefined;
+    this.bossPhaseText?.destroy();
+    this.bossPhaseText = undefined;
     this.resetBossObjects();
   }
 

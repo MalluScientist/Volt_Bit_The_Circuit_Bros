@@ -13,6 +13,11 @@ export class PreloadScene extends Phaser.Scene {
     this.makeVolt('volt-jump', 0x45c4ff, true);
     this.makeVolt('volt-fall', 0xffe05d, true);
     this.makeVolt('volt-attack', 0x159947, false, true);
+    this.makeVolt('bit-idle', 0x2f80ff, false, false, 0xffa33a);
+    this.makeVolt('bit-run', 0x4f96ff, false, false, 0xffa33a);
+    this.makeVolt('bit-jump', 0xffa33a, true, false, 0x2f80ff);
+    this.makeVolt('bit-fall', 0xffd45d, true, false, 0x2f80ff);
+    this.makeVolt('bit-attack', 0x2f80ff, false, true, 0xffa33a, true);
     this.rectTexture('enemy-led', 24, 24, COLORS.ledRed, COLORS.ledYellow);
     this.rectTexture('enemy-slime', 30, 20, 0x77ff4f, 0x45c4ff);
     this.rectTexture('enemy-bat', 30, 22, 0x5641b6, 0xffe05d);
@@ -41,18 +46,18 @@ export class PreloadScene extends Phaser.Scene {
     g.destroy();
   }
 
-  private makeVolt(key: string, suit: number, airborne: boolean, attack = false): void {
+  private makeVolt(key: string, suit: number, airborne: boolean, attack = false, accent = 0x45c4ff, heavy = false): void {
     const g = this.add.graphics();
     g.fillStyle(0x20242a);
     g.fillRect(8, 2, 18, 10);
-    g.fillStyle(0x45c4ff);
+    g.fillStyle(accent);
     g.fillRect(10, 4, 6, 4);
     g.fillRect(18, 4, 6, 4);
     g.fillStyle(0xf3c08a);
     g.fillRect(10, 10, 14, 10);
     g.fillStyle(suit);
     g.fillRect(7, 20, 20, 18);
-    g.fillStyle(0xffe05d);
+    g.fillStyle(heavy ? 0xffa33a : 0xffe05d);
     g.fillRect(7, 26, 20, 4);
     g.fillStyle(0x101014);
     g.fillRect(8, 38, 6, airborne ? 5 : 8);
@@ -61,12 +66,12 @@ export class PreloadScene extends Phaser.Scene {
     g.fillRect(4, 22, 4, 12);
     g.fillRect(26, 22, 4, 12);
     if (attack) {
-      g.fillStyle(0x45c4ff);
-      g.fillRect(28, 22, 20, 4);
-      g.fillStyle(0xffe05d);
-      g.fillRect(46, 20, 5, 8);
+      g.fillStyle(accent);
+      g.fillRect(28, heavy ? 18 : 22, heavy ? 24 : 20, heavy ? 10 : 4);
+      g.fillStyle(heavy ? 0xf7fff7 : 0xffe05d);
+      g.fillRect(heavy ? 50 : 46, heavy ? 15 : 20, heavy ? 8 : 5, heavy ? 16 : 8);
     }
-    g.generateTexture(key, attack ? 52 : 34, 48);
+    g.generateTexture(key, attack ? (heavy ? 60 : 52) : 34, 48);
     g.destroy();
   }
 }

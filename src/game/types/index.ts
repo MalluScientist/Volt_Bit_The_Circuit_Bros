@@ -1,13 +1,39 @@
+import { CharacterId } from '../characters';
+
 export type PowerUpType = 'None' | 'Solder Sword' | 'Battery Boost' | 'Fuse Shield';
 export type CollectibleType = 'coin' | 'cell' | 'chip' | 'powerup';
 export type HazardType = 'acid' | 'explosive' | 'beam' | 'shock';
 
 export interface SaveData {
+  selectedCharacter: CharacterId;
   highScore: number;
   completedLevels: number[];
   debugChips: Record<string, string[]>;
+  clockShards: number[];
+  upgrades: {
+    dashStabilizer: boolean;
+    batteryBoost: boolean;
+    checkpointReboot: boolean;
+    chipBeamEnhancer: boolean;
+    airControlModule: boolean;
+    fuseShield: boolean;
+    debugDrone: boolean;
+  };
   musicEnabled: boolean;
   storySeen: boolean;
+  settings: {
+    screenShake: boolean;
+    flashEffects: 'normal' | 'reduced' | 'off';
+    touchOpacity: number;
+    touchSize: number;
+    leftHandedTouch: boolean;
+    soundVolume: number;
+    musicVolume: number;
+    extraBatteryCell: boolean;
+    slowerHazards: boolean;
+    longerCoyoteTime: boolean;
+    keepDebugChipsAfterDeath: boolean;
+  };
 }
 
 export interface LevelTheme {
