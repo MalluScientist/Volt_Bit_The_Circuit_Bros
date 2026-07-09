@@ -23,6 +23,8 @@ import { CaptainOvercharge } from '../objects/CaptainOvercharge';
 import { LooseConnection } from '../objects/LooseConnection';
 import { LevelSpec } from '../types';
 
+const BOSS_BAR_WIDTH = 356;
+
 export abstract class BaseLevelScene extends Phaser.Scene {
   protected abstract levelId: number;
   protected spec!: LevelSpec;
@@ -269,7 +271,8 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     this.audio.boss();
     this.showBossTitle(this.boss.title);
     this.bossBarBack = this.add.rectangle(480, 60, 360, 16, 0x102530).setScrollFactor(0).setDepth(100).setStrokeStyle(2, 0xf7fff7);
-    this.bossBar = this.add.rectangle(300, 60, 356, 10, 0xff3e5f).setOrigin(0, 0.5).setScrollFactor(0).setDepth(101);
+    this.bossBar = this.add.rectangle(300, 60, BOSS_BAR_WIDTH, 10, 0xff3e5f).setOrigin(0, 0.5).setScrollFactor(0).setDepth(101);
+    this.updateBossBar();
   }
 
   private touchBoss(): void {
@@ -344,7 +347,8 @@ export abstract class BaseLevelScene extends Phaser.Scene {
 
   private updateBossBar(): void {
     if (!this.boss || !this.bossBar) return;
-    this.bossBar.width = 356 * Phaser.Math.Clamp(this.boss.health / this.boss.maxHealth, 0, 1);
+    const ratio = Phaser.Math.Clamp(this.boss.health / this.boss.maxHealth, 0, 1);
+    this.bossBar.setScale(ratio, 1);
   }
 
   private constrainBossToArena(): void {
