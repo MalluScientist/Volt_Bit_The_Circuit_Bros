@@ -103,7 +103,7 @@ export abstract class BaseLevelScene extends Phaser.Scene {
       return true;
     });
     if (!this.bossStarted && this.player.x > this.spec.bossArenaX) this.startBoss();
-    if (this.boss?.active) {
+    if (this.boss?.active && !this.boss.defeated) {
       this.boss.tick(time, this.player);
       this.constrainBossToArena();
       this.updateBossBar();
@@ -262,8 +262,7 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     this.platforms.forEach((platform) => this.physics.add.collider(this.boss!, platform));
     this.physics.add.overlap(this.player.attackBox, this.boss, () => this.hitBoss());
     this.physics.add.overlap(this.playerBeams, this.boss, (beam) => {
-      beam.destroy();
-      this.hitBoss(2);
+      this.beamBoss(beam as Phaser.GameObjects.Rectangle);
     });
     this.physics.add.overlap(this.player, this.boss, () => this.touchBoss());
     this.audio.boss();
@@ -283,17 +282,29 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     }
   }
 
-  private hitBoss(damage = 1): void {
-    if (!this.boss?.active || this.boss.defeated) return;
-    if (this.time.now - this.lastBossHitAt < 260) return;
+  private beamBoss(beam: Phaser.GameObjects.Rectangle): void {
+    if (!beam.active || beam.getData('spent')) return;
+    beam.setData('spent', true);
+    if (this.hitBoss(Number(beam.getData('damage') ?? 2), 0)) {
+      burst(this, beam.x, beam.y, 0x45c4ff, 14);
+      this.cameras.main.shake(70, 0.003);
+    }
+    beam.destroy();
+  }
+
+  private hitBoss(damage = 1, cooldownMs = 260): boolean {
+    if (!this.boss?.active || this.boss.defeated) return false;
+    if (cooldownMs > 0 && this.time.now - this.lastBossHitAt < cooldownMs) return false;
     this.lastBossHitAt = this.time.now;
     const defeated = this.boss.hurt(this.player.powerUp === 'Solder Sword' ? Math.max(2, damage) : damage);
+    this.updateBossBar();
     if (defeated) {
       this.player.score += 1000;
       this.bossBar?.destroy();
       this.bossBarBack?.destroy();
       this.completeLevelSoon();
     }
+    return true;
   }
 
   private fireChipBeam(): void {

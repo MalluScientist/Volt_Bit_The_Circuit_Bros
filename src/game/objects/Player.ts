@@ -175,15 +175,52 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const time = this.scene.time.now;
     if (time < this.beamAvailableAt) return undefined;
     this.beamAvailableAt = time + 420;
-    const beam = this.scene.add.rectangle(this.x + this.facing * 34, this.y + 2, 34, 10, 0x45c4ff).setDepth(15);
+    const beam = this.scene.add.rectangle(this.x + this.facing * 46, this.y + 2, 64, 10, 0x45c4ff, 0.95).setDepth(16);
+    const glow = this.scene.add.rectangle(beam.x, beam.y, 82, 22, 0x45c4ff, 0.22).setDepth(15);
     this.scene.physics.add.existing(beam);
     const body = beam.body as Phaser.Physics.Arcade.Body;
     body.setAllowGravity(false);
-    body.setVelocityX(this.facing * 520);
+    body.setSize(64, 10);
+    body.setVelocityX(this.facing * 720);
+    body.setBounce(0, 0);
     beam.setData('playerBeam', true);
     beam.setData('damage', 2);
-    this.scene.time.delayedCall(900, () => beam.destroy());
-    this.audio.beep(980, 0.08, 'triangle', 0.05);
+    beam.setData('glow', glow);
+    const trail = this.scene.time.addEvent({
+      delay: 24,
+      loop: true,
+      callback: () => {
+        if (!beam.active) {
+          trail.remove(false);
+          return;
+        }
+        glow.setPosition(beam.x, beam.y);
+        const spark = this.scene.add.rectangle(beam.x - this.facing * 38, beam.y + Phaser.Math.Between(-4, 4), 8, 3, 0x9eeeff, 0.65).setDepth(14);
+        this.scene.tweens.add({
+          targets: spark,
+          alpha: 0,
+          x: spark.x - this.facing * 18,
+          duration: 130,
+          onComplete: () => spark.destroy()
+        });
+      }
+    });
+    beam.setData('trail', trail);
+    beam.once(Phaser.GameObjects.Events.DESTROY, () => {
+      trail.remove(false);
+      glow.destroy();
+    });
+    this.scene.tweens.add({
+      targets: [beam, glow],
+      scaleX: 1.16,
+      duration: 70,
+      yoyo: true,
+      repeat: -1
+    });
+    this.scene.time.delayedCall(780, () => {
+      if (beam.active) beam.destroy();
+    });
+    this.audio.beep(1180, 0.09, 'triangle', 0.06);
     return beam;
   }
 
