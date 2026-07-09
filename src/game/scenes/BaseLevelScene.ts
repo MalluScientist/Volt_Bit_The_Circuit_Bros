@@ -108,6 +108,7 @@ export abstract class BaseLevelScene extends Phaser.Scene {
       this.constrainBossToArena();
       this.updateBossBar();
     }
+    this.recoverBossEncounter();
     this.handleWorldHazards();
     if (this.player.y > GAME_HEIGHT + 130) this.killPlayer();
     this.hud.update({
@@ -305,6 +306,17 @@ export abstract class BaseLevelScene extends Phaser.Scene {
       this.completeLevelSoon();
     }
     return true;
+  }
+
+  private recoverBossEncounter(): void {
+    if (!this.bossStarted || this.completingLevel) return;
+    if (this.boss?.defeated) {
+      this.completeLevelSoon();
+      return;
+    }
+    if (!this.boss || !this.boss.active) {
+      this.resetBossEncounter();
+    }
   }
 
   private fireChipBeam(): void {
