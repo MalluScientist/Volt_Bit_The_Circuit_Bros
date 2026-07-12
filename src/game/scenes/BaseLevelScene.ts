@@ -325,8 +325,8 @@ export abstract class BaseLevelScene extends Phaser.Scene {
   private beamBoss(beam: Phaser.GameObjects.Rectangle): void {
     if (!beam.active || beam.getData('spent')) return;
     beam.setData('spent', true);
-    const damage = Number(beam.getData('damage') ?? this.player.character.beamDamage);
-    if (this.hitBoss(damage, 'beam', 0)) {
+    const damage = Math.max(1, Number(beam.getData('damage') ?? this.player.character.beamDamage));
+    if (this.applyBossDamage(damage, 'beam', 0)) {
       burst(this, beam.x, beam.y, this.player.character.accent, 14);
       this.cameras.main.shake(70, 0.003);
     }
@@ -351,14 +351,24 @@ export abstract class BaseLevelScene extends Phaser.Scene {
   }
 
   private hitBoss(damage = 1, source: 'melee' | 'beam' | 'dash' | 'stomp' | 'hazard' | 'debug' = 'melee', cooldownMs = 260): boolean {
+    return this.applyBossDamage(damage, source, cooldownMs);
+  }
+
+  private applyBossDamage(damage = 1, source: 'melee' | 'beam' | 'dash' | 'stomp' | 'hazard' | 'debug' = 'melee', cooldownMs = 260): boolean {
     if (!this.boss?.active || this.boss.defeated) return false;
     if (cooldownMs > 0 && this.time.now - this.lastBossHitAt < cooldownMs) return false;
     this.lastBossHitAt = this.time.now;
     const finalDamage = this.player.powerUp === 'Solder Sword' && source !== 'beam' ? Math.max(this.player.character.attackDamage + 1, damage) : damage;
+    const beforeHealth = this.boss.health;
     const defeated = this.boss.takeDamage(finalDamage, source);
     this.audio.bossHit();
     this.updateBossBar();
-    if (defeated) {
+    if (source === 'beam' && this.boss.active && this.boss.health >= beforeHealth) {
+      this.boss.health = Phaser.Math.Clamp(beforeHealth - finalDamage, 0, this.boss.maxHealth);
+      this.updateBossBar();
+    }
+    if (defeated || this.boss.health <= 0) {
+      this.boss.defeated = true;
       this.audio.bossDefeat();
       this.player.score += 1000;
       this.bossBar?.destroy();
@@ -415,7 +425,8 @@ export abstract class BaseLevelScene extends Phaser.Scene {
   private updateBossBar(): void {
     if (!this.boss || !this.bossBar) return;
     const ratio = Phaser.Math.Clamp(this.boss.health / this.boss.maxHealth, 0, 1);
-    this.bossBar.setScale(ratio, 1);
+    this.bossBar.setScale(1, 1);
+    this.bossBar.width = Math.max(0, BOSS_BAR_WIDTH * ratio);
     this.bossHpText?.setText(`${this.boss.health}/${this.boss.maxHealth}`);
     const phase = ratio <= 1 / 3 ? 3 : ratio <= 2 / 3 ? 2 : 1;
     if (phase !== this.bossPhase) {
