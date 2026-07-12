@@ -142,7 +142,6 @@ export abstract class BaseLevelScene extends Phaser.Scene {
       this.processBossBeamHits();
       this.updateBossBar();
     }
-    this.recoverBossEncounter();
     this.handleWorldHazards();
     if (this.player.y > GAME_HEIGHT + 130) this.killPlayer('Gravity submitted a bug report.');
     this.hud.update({
@@ -236,7 +235,7 @@ export abstract class BaseLevelScene extends Phaser.Scene {
       this.player.heal(1);
       this.player.score += 75;
     } else if (item.collectType === 'chip') {
-      this.chips += 1;
+      this.chips = Math.min(3, this.chips + 1);
       this.player.score += 350;
       if (item.chipId) SaveSystem.collectChip(this.levelId, item.chipId);
       this.toast.show('Debug chip acquired.');
@@ -414,17 +413,6 @@ export abstract class BaseLevelScene extends Phaser.Scene {
       this.completeLevelSoon();
     }
     return true;
-  }
-
-  private recoverBossEncounter(): void {
-    if (!this.bossStarted || this.completingLevel) return;
-    if (this.boss?.defeated) {
-      this.completeLevelSoon();
-      return;
-    }
-    if (!this.boss || !this.boss.active) {
-      this.resetBossEncounter();
-    }
   }
 
   private fireChipBeam(): void {
