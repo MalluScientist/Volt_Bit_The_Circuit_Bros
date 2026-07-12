@@ -61,6 +61,7 @@ export abstract class BaseLevelScene extends Phaser.Scene {
   private bossPhase = 1;
   private bossHealth = 0;
   private bossMaxHealth = 0;
+  private gameOverPending = false;
   private attempt = 1;
 
   create(): void {
@@ -126,6 +127,7 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     this.bossPhase = 1;
     this.bossHealth = 0;
     this.bossMaxHealth = 0;
+    this.gameOverPending = false;
     this.bossPhaseText = undefined;
   }
 
@@ -470,9 +472,25 @@ export abstract class BaseLevelScene extends Phaser.Scene {
   }
 
   private killPlayer(message = 'Magic smoke detected.'): void {
+    if (this.gameOverPending) return;
     SaveSystem.recordDeath(this.levelId);
     if (this.player.health <= 0) {
-      this.scene.start('GameOverScene', { level: this.levelId, score: this.player.score, message });
+      this.gameOverPending = true;
+      this.completingLevel = true;
+      const score = this.player.score;
+      const body = this.player.body as Phaser.Physics.Arcade.Body;
+      body.setVelocity(0, 0);
+      body.setAcceleration(0, 0);
+      body.setEnable(false);
+      (this.player.attackBox.body as Phaser.Physics.Arcade.Body).setEnable(false);
+
+      // Damage is normally detected inside an Arcade Physics overlap callback.
+      // Shutting the level down from that callback leaves the world mid-step,
+      // and the next retry can inherit a non-updating physics world. Let the
+      // current physics step finish before changing scenes.
+      this.time.delayedCall(1, () => {
+        this.scene.start('GameOverScene', { level: this.levelId, score, message });
+      });
     } else {
       this.retryFromCheckpoint();
       this.toast.show(message);
