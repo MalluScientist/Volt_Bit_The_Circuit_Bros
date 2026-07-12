@@ -7,6 +7,7 @@ interface TouchControlCallbacks {
   jump: (active: boolean) => void;
   attack: () => void;
   dash: () => void;
+  dashReady?: () => boolean;
   beam: () => void;
   pause: () => void;
 }
@@ -14,6 +15,7 @@ interface TouchControlCallbacks {
 interface ButtonVisual {
   root: Phaser.GameObjects.Container;
   bg: Phaser.GameObjects.Rectangle;
+  label: Phaser.GameObjects.Text;
 }
 
 export class TouchControls {
@@ -49,7 +51,13 @@ export class TouchControls {
     this.holdButton(scene, moveX2, 470, '>', 72 * scale, 52 * scale, 118 * scale, 96 * scale, opacity, () => callbacks.moveRight(true), () => callbacks.moveRight(false));
     this.holdButton(scene, actionX, 470, 'JUMP', 88 * scale, 56 * scale, 136 * scale, 100 * scale, opacity, () => callbacks.jump(true), () => callbacks.jump(false));
     this.tapButton(scene, attackX, 470, 'ATK', 76 * scale, 54 * scale, 118 * scale, 96 * scale, opacity, callbacks.attack);
-    this.tapButton(scene, dashX, 470, 'DASH', 82 * scale, 54 * scale, 122 * scale, 96 * scale, opacity, callbacks.dash);
+    const dashVisual = this.tapButton(scene, dashX, 470, 'DASH', 98 * scale, 64 * scale, 142 * scale, 112 * scale, opacity, callbacks.dash);
+    scene.events.on(Phaser.Scenes.Events.UPDATE, () => {
+      const ready = callbacks.dashReady?.() ?? false;
+      dashVisual.bg.setStrokeStyle(ready ? 3 : 2, ready ? 0x77ff4f : 0x45c4ff, ready ? 0.95 : 0.82);
+      dashVisual.root.setScale(ready ? 1.06 : 1);
+      dashVisual.label.setColor(ready ? '#77ff4f' : '#f7fff7');
+    });
     this.tapButton(scene, beamX, 382, 'BEAM', 82 * scale, 48 * scale, 122 * scale, 84 * scale, opacity, callbacks.beam);
     this.tapButton(scene, 914, 46, 'II', 54 * scale, 42 * scale, 82 * scale, 70 * scale, opacity, callbacks.pause);
   }
@@ -71,7 +79,7 @@ export class TouchControls {
     });
   }
 
-  private tapButton(scene: Phaser.Scene, x: number, y: number, label: string, width: number, height: number, hitWidth: number, hitHeight: number, opacity: number, onTap: () => void): void {
+  private tapButton(scene: Phaser.Scene, x: number, y: number, label: string, width: number, height: number, hitWidth: number, hitHeight: number, opacity: number, onTap: () => void): ButtonVisual {
     const visual = this.makeButton(scene, x, y, label, width, height, opacity);
     const zone = this.makeHitZone(scene, x, y, hitWidth, hitHeight);
     zone.on('pointerdown', () => {
@@ -81,6 +89,7 @@ export class TouchControls {
     zone.on('pointerup', () => this.setPressed(visual, false));
     zone.on('pointerupoutside', () => this.setPressed(visual, false));
     zone.on('pointercancel', () => this.setPressed(visual, false));
+    return visual;
   }
 
   private makeButton(scene: Phaser.Scene, x: number, y: number, label: string, width: number, height: number, opacity: number): ButtonVisual {
@@ -92,7 +101,7 @@ export class TouchControls {
       color: '#f7fff7'
     }).setOrigin(0.5);
     root.add([bg, text]);
-    return { root, bg };
+    return { root, bg, label: text };
   }
 
   private makeHitZone(scene: Phaser.Scene, x: number, y: number, width: number, height: number): Phaser.GameObjects.Zone {

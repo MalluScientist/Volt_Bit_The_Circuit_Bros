@@ -6,10 +6,13 @@ const KEY = 'circuit-bros-save-v1';
 
 const DEFAULT_SAVE: SaveData = {
   selectedCharacter: 'volt',
+  bitUnlocked: false,
   highScore: 0,
   completedLevels: [],
   debugChips: {},
   clockShards: [],
+  deaths: {},
+  attempts: {},
   upgrades: {
     dashStabilizer: false,
     batteryBoost: false,
@@ -54,6 +57,7 @@ export class SaveSystem {
     const data = SaveSystem.load();
     if (!data.completedLevels.includes(level)) data.completedLevels.push(level);
     if (level <= MAIN_CLOCK_SHARD_COUNT && !data.clockShards.includes(level)) data.clockShards.push(level);
+    if (level >= SaveSystem.bitUnlockLevel()) data.bitUnlocked = true;
     data.highScore = Math.max(data.highScore, score);
     SaveSystem.unlockMilestoneRewards(data, level);
     SaveSystem.save(data);
@@ -73,12 +77,36 @@ export class SaveSystem {
 
   static setSelectedCharacter(character: CharacterId): void {
     const data = SaveSystem.load();
-    data.selectedCharacter = getCharacterConfig(character).id;
+    data.selectedCharacter = character === 'bit' && !data.bitUnlocked ? 'volt' : getCharacterConfig(character).id;
     SaveSystem.save(data);
   }
 
   static selectedCharacter(): CharacterId {
     return SaveSystem.load().selectedCharacter;
+  }
+
+  static bitUnlockLevel(): number {
+    return 4;
+  }
+
+  static isBitUnlocked(): boolean {
+    return SaveSystem.load().bitUnlocked;
+  }
+
+  static recordAttempt(level: number): number {
+    const data = SaveSystem.load();
+    const key = String(level);
+    data.attempts[key] = (data.attempts[key] ?? 0) + 1;
+    SaveSystem.save(data);
+    return data.attempts[key];
+  }
+
+  static recordDeath(level: number): number {
+    const data = SaveSystem.load();
+    const key = String(level);
+    data.deaths[key] = (data.deaths[key] ?? 0) + 1;
+    SaveSystem.save(data);
+    return data.deaths[key];
   }
 
   static setMusicEnabled(enabled: boolean): void {
@@ -94,14 +122,20 @@ export class SaveSystem {
   }
 
   private static normalize(raw: Partial<SaveData>): SaveData {
-    const selectedCharacter = getCharacterConfig(raw.selectedCharacter).id;
+    const completedLevels = Array.isArray(raw.completedLevels) ? raw.completedLevels : [];
+    const bitUnlocked = Boolean(raw.bitUnlocked) || completedLevels.includes(SaveSystem.bitUnlockLevel());
+    const requestedCharacter = getCharacterConfig(raw.selectedCharacter).id;
+    const selectedCharacter = requestedCharacter === 'bit' && !bitUnlocked ? 'volt' : requestedCharacter;
     return {
       ...DEFAULT_SAVE,
       ...raw,
+      bitUnlocked,
       selectedCharacter,
-      completedLevels: Array.isArray(raw.completedLevels) ? raw.completedLevels : [],
+      completedLevels,
       debugChips: raw.debugChips && typeof raw.debugChips === 'object' ? raw.debugChips : {},
       clockShards: Array.isArray(raw.clockShards) ? raw.clockShards : [],
+      deaths: raw.deaths && typeof raw.deaths === 'object' ? raw.deaths : {},
+      attempts: raw.attempts && typeof raw.attempts === 'object' ? raw.attempts : {},
       upgrades: { ...DEFAULT_SAVE.upgrades, ...(raw.upgrades ?? {}) },
       settings: { ...DEFAULT_SAVE.settings, ...(raw.settings ?? {}) }
     };

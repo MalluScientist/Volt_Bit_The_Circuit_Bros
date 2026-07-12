@@ -6,10 +6,13 @@ export type HazardType = 'acid' | 'explosive' | 'beam' | 'shock';
 
 export interface SaveData {
   selectedCharacter: CharacterId;
+  bitUnlocked: boolean;
   highScore: number;
   completedLevels: number[];
   debugChips: Record<string, string[]>;
   clockShards: number[];
+  deaths: Record<string, number>;
+  attempts: Record<string, number>;
   upgrades: {
     dashStabilizer: boolean;
     batteryBoost: boolean;
@@ -75,6 +78,33 @@ export interface HazardSpec {
   h: number;
 }
 
+export type TrapType =
+  | 'breakTrace'
+  | 'popSolderSpike'
+  | 'batteryBurst'
+  | 'glitchPlatform'
+  | 'fakeExit'
+  | 'dropSocket'
+  | 'dashBreakBlock'
+  | 'movingGoal'
+  | 'suspiciousCoin';
+
+export interface TrapSpec {
+  id: string;
+  type: TrapType;
+  x: number;
+  y: number;
+  width?: number;
+  height?: number;
+  triggerX?: number;
+  triggerY?: number;
+  triggerWidth?: number;
+  triggerHeight?: number;
+  warningDelay?: number;
+  once?: boolean;
+  params?: Record<string, unknown>;
+}
+
 export interface LevelSpec {
   id: number;
   theme: LevelTheme;
@@ -86,4 +116,5 @@ export interface LevelSpec {
   enemies: SpawnSpec[];
   collectibles: CollectibleSpec[];
   hazards: HazardSpec[];
+  traps: TrapSpec[];
 }

@@ -5,6 +5,7 @@ export interface HudState {
   health: number;
   maxHealth: number;
   dashRatio: number;
+  dashReady: boolean;
   coins: number;
   score: number;
   levelName: string;
@@ -17,6 +18,7 @@ export interface HudState {
 export class HUD {
   private hearts: Phaser.GameObjects.Rectangle[] = [];
   private dashBar: Phaser.GameObjects.Rectangle;
+  private dashReadyLight: Phaser.GameObjects.Rectangle;
   private coinText: Phaser.GameObjects.Text;
   private scoreText: Phaser.GameObjects.Text;
   private levelText: Phaser.GameObjects.Text;
@@ -30,6 +32,7 @@ export class HUD {
     }
     scene.add.rectangle(188, 18, 92, 12, 0x102530).setStrokeStyle(1, 0x45c4ff).setScrollFactor(0).setDepth(91);
     this.dashBar = scene.add.rectangle(143, 18, 0, 10, 0x45c4ff).setOrigin(0, 0.5).setScrollFactor(0).setDepth(92);
+    this.dashReadyLight = scene.add.rectangle(238, 18, 10, 10, 0x1c3c48).setScrollFactor(0).setDepth(92);
     this.coinText = this.text(250, 9);
     this.scoreText = this.text(350, 9);
     this.levelText = this.text(540, 9);
@@ -42,6 +45,9 @@ export class HUD {
       cell.setFillStyle(index < state.health ? state.characterColor : 0x1c3c48);
     });
     this.dashBar.width = Phaser.Math.Clamp(state.dashRatio, 0, 1) * 90;
+    this.dashBar.setFillStyle(state.dashReady ? 0x77ff4f : 0x45c4ff);
+    this.dashReadyLight.setFillStyle(state.dashReady ? 0x77ff4f : 0x1c3c48);
+    this.dashReadyLight.setScale(state.dashReady ? 1.2 : 1);
     this.coinText.setText(`Sparks ${state.coins}`);
     this.scoreText.setText(`Debug ${state.score}`);
     this.levelText.setText(`${state.characterName} - ${state.levelName}`);

@@ -42,36 +42,41 @@ export class CharacterSelectScene extends Phaser.Scene {
 
   private drawCard(id: CharacterId, x: number): void {
     const character = CHARACTER_CONFIGS[id];
-    const selected = SaveSystem.selectedCharacter() === id;
-    const card = this.add.rectangle(x, 286, 330, 300, 0x102530, 0.94).setStrokeStyle(3, selected ? 0xffe05d : character.accent, 0.9);
+    const unlocked = id === 'volt' || SaveSystem.isBitUnlocked();
+    const selected = SaveSystem.selectedCharacter() === id && unlocked;
+    const card = this.add.rectangle(x, 286, 330, 300, unlocked ? 0x102530 : 0x101014, unlocked ? 0.94 : 0.82).setStrokeStyle(3, selected ? 0xffe05d : unlocked ? character.accent : 0x5a6470, 0.9);
     this.add.text(x, 160, character.name, {
       fontFamily: 'monospace',
       fontSize: '34px',
-      color: selected ? '#ffe05d' : '#f7fff7'
+      color: selected ? '#ffe05d' : unlocked ? '#f7fff7' : '#9aa3aa'
     }).setOrigin(0.5);
-    this.add.sprite(x, 220, character.idleTexture).setScale(2.2);
+    this.add.sprite(x, 220, character.idleTexture).setScale(2.2).setAlpha(unlocked ? 1 : 0.42);
     this.add.text(x, 278, character.selectLine, {
       fontFamily: 'monospace',
       fontSize: '15px',
-      color: '#f7fff7',
+      color: unlocked ? '#f7fff7' : '#9aa3aa',
       align: 'center',
       wordWrap: { width: 260 }
     }).setOrigin(0.5);
-    const stats = id === 'volt'
+    const stats = !unlocked
+      ? 'LOCKED\nComplete Logic Gate Lab to unlock.\n4 battery cells after unlock.'
+      : id === 'volt'
       ? 'Speed: HIGH\nHealth: 3\nAttack: quick slash\nBeam: fast cooldown'
       : 'Speed: STEADY\nHealth: 4\nAttack: heavy tool\nBeam: stronger hit';
     this.add.text(x, 354, stats, {
       fontFamily: 'monospace',
       fontSize: '15px',
-      color: '#9bd7e8',
+      color: unlocked ? '#9bd7e8' : '#ff9d5d',
       align: 'center',
       lineSpacing: 7
     }).setOrigin(0.5);
-    new Button(this, x, 440, selected ? 'Selected' : `Pick ${character.name}`, () => {
+    new Button(this, x, 440, !unlocked ? 'Locked' : selected ? 'Selected' : `Pick ${character.name}`, () => {
+      if (!unlocked) return;
       SaveSystem.setSelectedCharacter(id);
       this.scene.start(this.nextScene);
     }, 220);
     card.setInteractive({ useHandCursor: true }).on('pointerup', () => {
+      if (!unlocked) return;
       SaveSystem.setSelectedCharacter(id);
       this.scene.start(this.nextScene);
     });

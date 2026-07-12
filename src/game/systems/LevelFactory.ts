@@ -49,7 +49,14 @@ export function makeLevel(id: number): LevelSpec {
       collectibles: placeCollectibles(level1Platforms, pickups(id)),
       hazards: placeHazards(level1Platforms, [
         { type: 'beam', x: 1880, y: 428, w: 110, h: 18 }
-      ])
+      ]),
+      traps: [
+        { id: 'l1-dash-block', type: 'dashBreakBlock', x: 650, y: 404, width: 54, height: 42, params: { message: 'Dash trace opened.' } },
+        { id: 'l1-break-trace', type: 'breakTrace', x: 1340, y: 360, width: 150, height: 18, warningDelay: 520 },
+        { id: 'l1-solder-pop', type: 'popSolderSpike', x: 1780, y: 410, width: 104, height: 26, triggerX: 1640, triggerY: 330, triggerWidth: 210, triggerHeight: 130, warningDelay: 520 },
+        { id: 'l1-suspicious-coin', type: 'suspiciousCoin', x: 2560, y: 326, triggerWidth: 40, triggerHeight: 40, warningDelay: 360 },
+        { id: 'l1-fake-exit', type: 'fakeExit', x: 3320, y: 392, width: 80, height: 70, triggerX: 3230, triggerY: 330, triggerWidth: 160, triggerHeight: 150, warningDelay: 430 }
+      ]
     };
   }
   if (id === 2) {
@@ -76,7 +83,14 @@ export function makeLevel(id: number): LevelSpec {
       hazards: placeHazards(level2Platforms, [
         { type: 'explosive', x: 1780, y: 374, w: 42, h: 42 },
         { type: 'acid', x: 3200, y: 448, w: 140, h: 18 }
-      ])
+      ]),
+      traps: [
+        { id: 'l2-battery-wait', type: 'batteryBurst', x: 1160, y: 395, width: 150, height: 84, triggerX: 1070, triggerY: 316, triggerWidth: 220, triggerHeight: 120, warningDelay: 820 },
+        { id: 'l2-dash-shortcut', type: 'dashBreakBlock', x: 2030, y: 390, width: 58, height: 70, params: { message: 'Shortcut trace cracked open.' } },
+        { id: 'l2-greedy-chip', type: 'suspiciousCoin', x: 2660, y: 342, triggerWidth: 46, triggerHeight: 46, warningDelay: 430 },
+        { id: 'l2-fake-boost', type: 'glitchPlatform', x: 3000, y: 374, width: 150, height: 18, triggerX: 2920, triggerY: 305, triggerWidth: 220, triggerHeight: 120, warningDelay: 600 },
+        { id: 'l2-battery-end', type: 'batteryBurst', x: 3360, y: 400, width: 180, height: 86, triggerX: 3270, triggerY: 320, triggerWidth: 250, triggerHeight: 130, warningDelay: 900 }
+      ]
     };
   }
   if (id === 4) {
@@ -111,7 +125,15 @@ export function makeLevel(id: number): LevelSpec {
         { type: 'beam', x: 1220, y: 410, w: 112, h: 16 },
         { type: 'shock', x: 2700, y: 400, w: 120, h: 16 },
         { type: 'beam', x: 3560, y: 420, w: 116, h: 16 }
-      ])
+      ]),
+      traps: [
+        { id: 'l4-and-gate', type: 'glitchPlatform', x: 1380, y: 360, width: 170, height: 20, triggerX: 1260, triggerY: 300, triggerWidth: 230, triggerHeight: 120, warningDelay: 520 },
+        { id: 'l4-dash-gate', type: 'dashBreakBlock', x: 2260, y: 372, width: 62, height: 72, params: { message: 'NAND gate inverted.' } },
+        { id: 'l4-reverse-pad', type: 'dropSocket', x: 2920, y: 336, width: 180, height: 28, triggerX: 2820, triggerY: 276, triggerWidth: 230, triggerHeight: 120, warningDelay: 500 },
+        { id: 'l4-moving-goal', type: 'movingGoal', x: 3670, y: 372, width: 74, height: 64, triggerX: 3560, triggerY: 320, triggerWidth: 220, triggerHeight: 130, warningDelay: 340 },
+        { id: 'l4-end-fakeout', type: 'fakeExit', x: 3820, y: 390, width: 86, height: 68, triggerX: 3730, triggerY: 330, triggerWidth: 190, triggerHeight: 140, warningDelay: 430 },
+        { id: 'l4-risk-reward', type: 'suspiciousCoin', x: 3180, y: 300, triggerWidth: 44, triggerHeight: 44, warningDelay: 360 }
+      ]
     };
   }
   const level3Platforms: PlatformSpec[] = [
@@ -138,7 +160,15 @@ export function makeLevel(id: number): LevelSpec {
     hazards: placeHazards(level3Platforms, [
       { type: 'shock', x: 1780, y: 382, w: 110, h: 18 },
       { type: 'beam', x: 3180, y: 448, w: 110, h: 18 }
-    ])
+    ]),
+    traps: [
+      { id: 'l3-drop-socket', type: 'dropSocket', x: 1120, y: 402, width: 132, height: 28, triggerX: 1040, triggerY: 330, triggerWidth: 190, triggerHeight: 120, warningDelay: 520 },
+      { id: 'l3-secret-block', type: 'dashBreakBlock', x: 1980, y: 386, width: 62, height: 76, params: { message: 'Undocumented feature found.' } },
+      { id: 'l3-glitch-bridge', type: 'glitchPlatform', x: 2360, y: 335, width: 190, height: 20, triggerX: 2260, triggerY: 280, triggerWidth: 220, triggerHeight: 115, warningDelay: 560 },
+      { id: 'l3-fake-terminal', type: 'movingGoal', x: 3060, y: 372, width: 76, height: 64, triggerX: 2960, triggerY: 320, triggerWidth: 210, triggerHeight: 120, warningDelay: 360 },
+      { id: 'l3-corrupt-chip', type: 'suspiciousCoin', x: 3280, y: 316, triggerWidth: 48, triggerHeight: 48, warningDelay: 380 },
+      { id: 'l3-fake-exit', type: 'fakeExit', x: 3500, y: 390, width: 88, height: 66, triggerX: 3400, triggerY: 330, triggerWidth: 180, triggerHeight: 140, warningDelay: 430 }
+    ]
   };
 }
 

@@ -178,6 +178,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.scene.time.now >= this.dashAvailableAt && this.dashEnergy >= this.dashCost()) this.dash(this.scene.time.now);
   }
 
+  dashReady(): boolean {
+    return this.scene.time.now >= this.dashAvailableAt && this.dashEnergy >= this.dashCost();
+  }
+
   fireChipBeam(): Phaser.GameObjects.Rectangle | undefined {
     const time = this.scene.time.now;
     if (time < this.beamAvailableAt) return undefined;
@@ -225,7 +229,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       yoyo: true,
       repeat: -1
     });
-    this.scene.time.delayedCall(780, () => {
+    this.scene.time.delayedCall(1250, () => {
       if (beam.active) beam.destroy();
     });
     this.audio.beep(this.character.id === 'bit' ? 820 : 1180, 0.09, 'triangle', 0.06);
@@ -241,11 +245,29 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     body.setVelocity(this.facing * this.character.dashSpeed, 0);
     this.dashAvailableAt = time + this.character.dashCooldown;
     burst(this.scene, this.x - this.facing * 12, this.y, this.character.accent, this.character.id === 'bit' ? 12 : 8);
+    this.scene.cameras.main.shake(45, 0.0025);
+    const trail = this.scene.time.addEvent({
+      delay: 26,
+      repeat: 5,
+      callback: () => {
+        const spark = this.scene.add.rectangle(this.x - this.facing * 18, this.y + Phaser.Math.Between(-12, 12), 22, 5, this.character.accent, 0.72).setDepth(14);
+        this.scene.tweens.add({
+          targets: spark,
+          alpha: 0,
+          x: spark.x - this.facing * 30,
+          scaleX: 0.25,
+          duration: 130,
+          onComplete: () => spark.destroy()
+        });
+      }
+    });
     this.scene.time.delayedCall(170, () => {
       if (!this.active) return;
       this.isDashing = false;
       body.setAllowGravity(true);
+      trail.remove(false);
     });
+    this.audio.beep(this.character.id === 'bit' ? 520 : 920, 0.07, 'sawtooth', 0.065);
   }
 
   private attack(time: number): void {

@@ -4,6 +4,7 @@ import { AudioSystem } from '../systems/AudioSystem';
 import { makeLevel } from '../systems/LevelFactory';
 import { SaveSystem } from '../systems/SaveSystem';
 import { burst, floatingText } from '../systems/ParticleSystem';
+import { TrapManager } from '../systems/TrapManager';
 import { HUD } from '../ui/HUD';
 import { DialogToast } from '../ui/DialogToast';
 import { TouchControls } from '../ui/TouchControls';
@@ -50,6 +51,7 @@ export abstract class BaseLevelScene extends Phaser.Scene {
   protected chips = 0;
   private bossBar?: Phaser.GameObjects.Rectangle;
   private bossBarBack?: Phaser.GameObjects.Rectangle;
+  private bossHpText?: Phaser.GameObjects.Text;
   private pausePanel?: Phaser.GameObjects.Container;
   private paused = false;
   private lastBossHitAt = 0;
@@ -58,10 +60,13 @@ export abstract class BaseLevelScene extends Phaser.Scene {
   private character!: CharacterConfig;
   private bossPhaseText?: Phaser.GameObjects.Text;
   private bossPhase = 1;
+  private traps?: TrapManager;
+  private attempt = 1;
 
   create(): void {
     this.resetSceneState();
     this.spec = makeLevel(this.levelId);
+    this.attempt = SaveSystem.recordAttempt(this.levelId);
     this.character = getCharacterConfig(SaveSystem.selectedCharacter());
     this.physics.world.setBounds(0, 0, this.spec.width, GAME_HEIGHT + 220);
     this.cameras.main.setBounds(0, 0, this.spec.width, GAME_HEIGHT);
@@ -78,16 +83,22 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
     this.hud = new HUD(this);
     this.toast = new DialogToast(this);
+    this.traps = new TrapManager(this, this.player, this.spec.traps, {
+      toast: (message) => this.toast.show(message)
+    });
+    if (this.levelId === 1) this.drawTutorialStrip();
     new TouchControls(this, {
       moveLeft: (active) => this.player.setTouchMove('left', active),
       moveRight: (active) => this.player.setTouchMove('right', active),
       jump: (active) => this.player.setTouchJump(active),
       attack: () => this.player.requestAttack(),
       dash: () => this.player.requestDash(),
+      dashReady: () => this.player.dashReady(),
       beam: () => this.fireChipBeam(),
       pause: () => this.togglePause()
     });
     this.toast.show(Phaser.Math.RND.pick(this.character.levelLines));
+    this.time.delayedCall(720, () => this.toast.show(`Attempt ${this.attempt}`));
     this.time.delayedCall(1800, () => this.toast.show(this.levelId === 1 ? 'Warning: confidence exceeds recommended limit.' : this.levelId === 2 ? 'Magic smoke probability increasing.' : this.levelId === 3 ? 'Continuity restored. Somehow.' : 'Recommendation: do not argue with logic gates.'));
     this.spawnEnemies();
     this.spawnCollectibles();
@@ -104,6 +115,7 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     this.bossStarted = false;
     this.bossBar = undefined;
     this.bossBarBack = undefined;
+    this.bossHpText = undefined;
     this.pausePanel = undefined;
     this.paused = false;
     this.lastBossHitAt = 0;
@@ -111,6 +123,7 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     this.chips = 0;
     this.bossPhase = 1;
     this.bossPhaseText = undefined;
+    this.traps = undefined;
   }
 
   update(time: number): void {
@@ -128,12 +141,14 @@ export abstract class BaseLevelScene extends Phaser.Scene {
       this.updateBossBar();
     }
     this.recoverBossEncounter();
+    this.traps?.update();
     this.handleWorldHazards();
-    if (this.player.y > GAME_HEIGHT + 130) this.killPlayer();
+    if (this.player.y > GAME_HEIGHT + 130) this.killPlayer('Gravity submitted a bug report.');
     this.hud.update({
       health: this.player.health,
       maxHealth: this.player.maxHealth,
       dashRatio: this.player.dashEnergy,
+      dashReady: this.player.dashReady(),
       coins: this.player.coins,
       score: this.player.score,
       levelName: this.spec.theme.name,
@@ -142,6 +157,19 @@ export abstract class BaseLevelScene extends Phaser.Scene {
       powerUp: this.player.powerUp,
       chips: this.chips
     });
+  }
+
+  private drawTutorialStrip(): void {
+    const y = 96;
+    const panel = this.add.rectangle(300, y, 430, 54, 0x07131b, 0.78).setStrokeStyle(2, 0x45c4ff, 0.55).setScrollFactor(0).setDepth(80);
+    const coin = this.add.sprite(118, y, 'coin').setTint(0xffe05d).setScrollFactor(0).setDepth(81);
+    const chip = this.add.sprite(188, y, 'chip').setTint(0x45c4ff).setScrollFactor(0).setDepth(81);
+    const cell = this.add.sprite(258, y, 'cell').setTint(0x77ff4f).setScrollFactor(0).setDepth(81);
+    const safe = this.add.text(98, y + 22, 'COLLECT', { fontFamily: 'monospace', fontSize: '12px', color: '#77ff4f' }).setScrollFactor(0).setDepth(81);
+    const danger = this.add.rectangle(390, y, 42, 18, 0xff3e5f, 0.8).setStrokeStyle(2, 0xffa33a).setScrollFactor(0).setDepth(81);
+    const spike = this.add.triangle(464, y + 10, 0, 18, 14, 0, 28, 18, 0xff6b2a, 0.9).setScrollFactor(0).setDepth(81);
+    const avoid = this.add.text(358, y + 22, 'AVOID', { fontFamily: 'monospace', fontSize: '12px', color: '#ff9d5d' }).setScrollFactor(0).setDepth(81);
+    this.time.delayedCall(5200, () => [panel, coin, chip, cell, safe, danger, spike, avoid].forEach((obj) => obj.destroy()));
   }
 
   private drawBackground(): void {
@@ -239,7 +267,7 @@ export abstract class BaseLevelScene extends Phaser.Scene {
       body.setVelocityY(-360);
       if (defeated) this.player.score += enemy.scoreValue;
     } else if (this.player.takeDamage(1, enemy.x)) {
-      this.killPlayer();
+      this.killPlayer('Magic smoke detected.');
     }
   }
 
@@ -262,7 +290,7 @@ export abstract class BaseLevelScene extends Phaser.Scene {
       this.cameras.main.shake(130, 0.008);
       this.time.delayedCall(180, () => hazard.destroy());
     }
-    if (this.player.takeDamage(1, hazard.x)) this.killPlayer();
+    if (this.player.takeDamage(1, hazard.x)) this.killPlayer(String(hazard.getData('deathMessage') ?? 'Magic smoke detected.'));
   }
 
   private handleWorldHazards(): void {
@@ -270,7 +298,7 @@ export abstract class BaseLevelScene extends Phaser.Scene {
       const obj = child as Phaser.GameObjects.GameObject & { getData?: (key: string) => unknown; active: boolean; destroy: () => void; x?: number };
       if (!obj.getData?.('projectile') && !obj.getData?.('hazard')) return true;
       if (obj.active && this.physics.overlap(this.player, obj as Phaser.GameObjects.GameObject)) {
-        if (this.player.takeDamage(Number(obj.getData('damage') ?? 1), obj.x)) this.killPlayer();
+        if (this.player.takeDamage(Number(obj.getData('damage') ?? 1), obj.x)) this.killPlayer(String(obj.getData('deathMessage') ?? 'Magic smoke detected.'));
         if (obj.getData('projectile')) obj.destroy();
       }
       return true;
@@ -298,6 +326,7 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     this.showBossTitle(this.boss.title);
     this.bossBarBack = this.add.rectangle(480, 60, 360, 16, 0x102530).setScrollFactor(0).setDepth(100).setStrokeStyle(2, 0xf7fff7);
     this.bossBar = this.add.rectangle(300, 60, BOSS_BAR_WIDTH, 10, 0xff3e5f).setOrigin(0, 0.5).setScrollFactor(0).setDepth(101);
+    this.bossHpText = this.add.text(676, 52, '', { fontFamily: 'monospace', fontSize: '13px', color: '#f7fff7' }).setScrollFactor(0).setDepth(101);
     this.bossPhase = 1;
     this.bossPhaseText = this.add.text(480, 82, 'Phase 1', { fontFamily: 'monospace', fontSize: '14px', color: '#f7fff7' }).setOrigin(0.5).setScrollFactor(0).setDepth(101);
     this.updateBossBar();
@@ -308,9 +337,9 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     if (body.velocity.y > 130 && this.player.y < this.boss.y - 28) {
       body.setVelocityY(-410);
-      this.hitBoss();
+      this.hitBoss(this.player.character.attackDamage, 'stomp');
     } else if (this.player.takeDamage(1, this.boss.x)) {
-      this.killPlayer();
+      this.killPlayer('Magic smoke detected.');
     }
   }
 
@@ -318,7 +347,7 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     if (!beam.active || beam.getData('spent')) return;
     beam.setData('spent', true);
     const damage = Number(beam.getData('damage') ?? this.player.character.beamDamage);
-    if (this.hitBoss(damage, 0)) {
+    if (this.hitBoss(damage, 'beam', 0)) {
       burst(this, beam.x, beam.y, this.player.character.accent, 14);
       this.cameras.main.shake(70, 0.003);
     }
@@ -329,18 +358,25 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     if (!this.boss?.active || this.boss.defeated) return;
     this.playerBeams.children.each((child) => {
       const beam = child as Phaser.GameObjects.Rectangle;
-      if (beam.active && !beam.getData('spent') && this.physics.overlap(beam, this.boss!)) {
+      if (beam.active && !beam.getData('spent') && this.beamIntersectsBoss(beam)) {
         this.beamBoss(beam);
       }
       return true;
     });
   }
 
-  private hitBoss(damage = 1, cooldownMs = 260): boolean {
+  private beamIntersectsBoss(beam: Phaser.GameObjects.Rectangle): boolean {
+    if (!this.boss?.active) return false;
+    if (this.physics.overlap(beam, this.boss)) return true;
+    return Phaser.Geom.Intersects.RectangleToRectangle(beam.getBounds(), this.boss.getBounds());
+  }
+
+  private hitBoss(damage = 1, source: 'melee' | 'beam' | 'dash' | 'stomp' | 'hazard' | 'debug' = 'melee', cooldownMs = 260): boolean {
     if (!this.boss?.active || this.boss.defeated) return false;
     if (cooldownMs > 0 && this.time.now - this.lastBossHitAt < cooldownMs) return false;
     this.lastBossHitAt = this.time.now;
-    const defeated = this.boss.hurt(this.player.powerUp === 'Solder Sword' ? Math.max(this.player.character.attackDamage + 1, damage) : damage);
+    const finalDamage = this.player.powerUp === 'Solder Sword' && source !== 'beam' ? Math.max(this.player.character.attackDamage + 1, damage) : damage;
+    const defeated = this.boss.takeDamage(finalDamage, source);
     this.audio.bossHit();
     this.updateBossBar();
     if (defeated) {
@@ -348,6 +384,7 @@ export abstract class BaseLevelScene extends Phaser.Scene {
       this.player.score += 1000;
       this.bossBar?.destroy();
       this.bossBarBack?.destroy();
+      this.bossHpText?.destroy();
       this.bossPhaseText?.destroy();
       this.completeLevelSoon();
     }
@@ -400,6 +437,7 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     if (!this.boss || !this.bossBar) return;
     const ratio = Phaser.Math.Clamp(this.boss.health / this.boss.maxHealth, 0, 1);
     this.bossBar.setScale(ratio, 1);
+    this.bossHpText?.setText(`${this.boss.health}/${this.boss.maxHealth}`);
     const phase = ratio <= 1 / 3 ? 3 : ratio <= 2 / 3 ? 2 : 1;
     if (phase !== this.bossPhase) {
       this.bossPhase = phase;
@@ -423,17 +461,19 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     this.tweens.add({ targets: line, alpha: 0, delay: 1550, duration: 550, onComplete: () => line.destroy() });
   }
 
-  private killPlayer(): void {
+  private killPlayer(message = 'Magic smoke detected.'): void {
+    SaveSystem.recordDeath(this.levelId);
     if (this.player.health <= 0) {
-      this.scene.start('GameOverScene', { level: this.levelId, score: this.player.score });
+      this.scene.start('GameOverScene', { level: this.levelId, score: this.player.score, message });
     } else {
       this.retryFromCheckpoint();
-      this.toast.show('That was probably safe.');
+      this.toast.show(message);
     }
   }
 
   private retryFromCheckpoint(): void {
     this.resetBossEncounter();
+    this.traps?.reset();
     this.player.restartAtCheckpoint();
   }
 
@@ -449,6 +489,8 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     this.bossBar = undefined;
     this.bossBarBack?.destroy();
     this.bossBarBack = undefined;
+    this.bossHpText?.destroy();
+    this.bossHpText = undefined;
     this.bossPhaseText?.destroy();
     this.bossPhaseText = undefined;
     this.resetBossObjects();

@@ -16,4 +16,4 @@ export const COLORS = {
   black: 0x101014
 };
 
-export const LEVEL_COUNT = 3;
+export const LEVEL_COUNT = 4;

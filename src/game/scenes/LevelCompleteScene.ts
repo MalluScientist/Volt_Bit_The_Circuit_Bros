@@ -24,9 +24,10 @@ export class LevelCompleteScene extends Phaser.Scene {
       `Spark Coins: ${data.coins ?? 0}`,
       `Debug Chips: ${data.chips}/3`,
       data.clockShardEarned ? `${level.reward} recovered` : `${level.reward} pending`,
+      data.level >= SaveSystem.bitUnlockLevel() ? 'BIT UNLOCKED! The careful brother joins the debug mission.' : '',
       `Total Clock Shards: ${ProgressionSystem.shardText(save)}`,
       'Root cause analysis pending.'
-    ].join('\n'), {
+    ].filter(Boolean).join('\n'), {
       fontFamily: 'monospace',
       fontSize: '19px',
       color: '#f7fff7',

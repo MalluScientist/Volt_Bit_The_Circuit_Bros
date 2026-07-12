@@ -13,10 +13,11 @@ This file preserves working context for future Codex sessions in this repository
 
 ## Current Game Shape
 
-- Three playable levels:
+- Four playable levels:
   - Level 1: `LED Carnival`
   - Level 2: `Battery Badlands`
   - Level 3: `Breadboard Bazaar`
+  - Level 4: `Logic Gate Lab`
 - Core systems include platforming, enemies, hazards, collectibles, checkpoints, mini bosses, HUD, menus, touch controls, generated placeholder art, and Web Audio generated sound effects.
 - Volt and Bit are now separate selectable characters backed by shared character configs. Volt is faster with lower health; Bit is slower with more health and stronger attacks.
 - Level select lists the planned 9-level campaign. Levels 1-4 are implemented; Levels 5-9 remain locked future entries.
@@ -71,6 +72,7 @@ Screenshots and issue captures are kept in `screenshots/`.
 
 ## Notes For Future Work
 
+- After making fixes or gameplay changes in this repo, rebuild the itch.io upload zip from `dist`, commit the relevant source/artifact changes, and push to git.
 - Next intended work is continuing Milestone 4: add Capacitor Sky City and its boss using the campaign/progression foundations.
 - Keep the first-screen game experience focused on playability, not marketing copy.
 - Preserve the existing Vite / Phaser / TypeScript structure unless there is a concrete reason to change it.
