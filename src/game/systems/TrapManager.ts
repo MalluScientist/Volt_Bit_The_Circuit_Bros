@@ -77,44 +77,7 @@ export class TrapManager {
       });
       this.scene.tweens.add({ targets: block, alpha: 0.72, yoyo: true, repeat: -1, duration: 560 });
       trap.objects.push(block, cracks);
-      return;
     }
-
-    if (spec.type === 'breakTrace' || spec.type === 'glitchPlatform' || spec.type === 'dropSocket') {
-      const color = spec.type === 'dropSocket' ? 0xe7e0c7 : spec.type === 'glitchPlatform' ? 0x8e6bff : 0xf3a33a;
-      const platform = this.scene.add.rectangle(spec.x, spec.y, spec.width ?? 120, spec.height ?? 18, color, 0.82)
-        .setStrokeStyle(2, spec.type === 'breakTrace' ? 0xffe05d : 0xff3e5f, 0.75);
-      this.scene.physics.add.existing(platform, true);
-      this.scene.physics.add.collider(this.player, platform);
-      this.scene.tweens.add({ targets: platform, alpha: spec.type === 'glitchPlatform' ? 0.38 : 0.68, yoyo: true, repeat: -1, duration: 420 });
-      trap.objects.push(platform);
-      return;
-    }
-
-    if (spec.type === 'suspiciousCoin') {
-      const coin = this.scene.add.rectangle(spec.x, spec.y, 20, 20, 0xffe05d, 0.82)
-        .setStrokeStyle(3, 0x8e6bff, 0.95)
-        .setAngle(45)
-        .setData('trapVisual', true);
-      const aura = this.scene.add.rectangle(spec.x, spec.y, 34, 34, 0x8e6bff, 0.18).setStrokeStyle(1, 0xff3e5f, 0.8);
-      this.scene.tweens.add({ targets: [coin, aura], alpha: 0.35, yoyo: true, repeat: -1, duration: 210 });
-      trap.objects.push(coin, aura);
-      return;
-    }
-
-    if (spec.type === 'fakeExit' || spec.type === 'movingGoal') {
-      const terminal = this.scene.add.rectangle(spec.x, spec.y, spec.width ?? 76, spec.height ?? 60, 0x102530, 0.9)
-        .setStrokeStyle(2, 0x45c4ff, 0.82);
-      const light = this.scene.add.rectangle(spec.x, spec.y - 18, 18, 8, 0x77ff4f, 0.9);
-      this.scene.tweens.add({ targets: light, alpha: 0.25, yoyo: true, repeat: -1, duration: 500 });
-      trap.objects.push(terminal, light);
-      return;
-    }
-
-    const marker = this.scene.add.rectangle(spec.x, spec.y, spec.width ?? 80, spec.height ?? 24, 0xff3e5f, 0.16)
-      .setStrokeStyle(2, spec.type === 'batteryBurst' ? 0xffa33a : 0xff3e5f, 0.78);
-    this.scene.tweens.add({ targets: marker, alpha: 0.36, yoyo: true, repeat: -1, duration: 360 });
-    trap.objects.push(marker);
   }
 
   private trigger(trap: TrapRuntime): void {
@@ -129,9 +92,15 @@ export class TrapManager {
 
   private warn(trap: TrapRuntime): void {
     this.audio.beep(trap.spec.type === 'batteryBurst' ? 220 : 620, 0.06, 'square', 0.035);
-    trap.objects.forEach((obj) => {
-      const visual = obj as Phaser.GameObjects.Shape;
-      if ('setStrokeStyle' in visual) visual.setStrokeStyle(3, 0xff3e5f, 0.95);
+    if (trap.spec.type === 'dashBreakBlock') return;
+    const width = trap.spec.width ?? (trap.spec.type === 'batteryBurst' ? 120 : 72);
+    const height = trap.spec.height ?? (trap.spec.type === 'batteryBurst' ? 64 : 18);
+    const warning = this.scene.add.rectangle(trap.spec.x, trap.spec.y, width, height, 0xff3e5f, 0.18)
+      .setStrokeStyle(2, 0xffa33a, 0.75)
+      .setDepth(30);
+    this.scene.tweens.add({ targets: warning, alpha: 0.55, yoyo: true, repeat: 2, duration: 90 });
+    this.scene.time.delayedCall(360, () => {
+      if (warning.active) warning.destroy();
     });
   }
 
