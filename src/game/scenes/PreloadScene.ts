@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { COLORS } from '../constants';
 import { SaveSystem } from '../systems/SaveSystem';
+import { RETRY_LEVEL_KEY } from './GameOverScene';
 
 export class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -31,7 +32,18 @@ export class PreloadScene extends Phaser.Scene {
     this.rectTexture('chip', 18, 18, 0x159947, 0xf7fff7);
     this.rectTexture('powerup', 22, 22, 0xff3e5f, 0x45c4ff);
     this.rectTexture('checkpoint', 28, 48, 0x45c4ff, 0xffe05d);
-    this.scene.start(SaveSystem.load().storySeen ? 'MainMenuScene' : 'StoryScene');
+    const retryLevel = this.consumeRetryLevel();
+    this.scene.start(retryLevel ? `Level${retryLevel}Scene` : SaveSystem.load().storySeen ? 'MainMenuScene' : 'StoryScene');
+  }
+
+  private consumeRetryLevel(): number | undefined {
+    try {
+      const value = Number(sessionStorage.getItem(RETRY_LEVEL_KEY));
+      sessionStorage.removeItem(RETRY_LEVEL_KEY);
+      return Number.isInteger(value) && value >= 1 && value <= 4 ? value : undefined;
+    } catch {
+      return undefined;
+    }
   }
 
   private rectTexture(key: string, w: number, h: number, fill: number, accent: number): void {

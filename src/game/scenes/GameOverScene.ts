@@ -1,11 +1,7 @@
 import Phaser from 'phaser';
 import { Button } from '../ui/Button';
-import { Level1Scene } from './Level1Scene';
-import { Level2Scene } from './Level2Scene';
-import { Level3Scene } from './Level3Scene';
-import { Level4Scene } from './Level4Scene';
 
-const LEVEL_SCENES = [Level1Scene, Level2Scene, Level3Scene, Level4Scene] as const;
+export const RETRY_LEVEL_KEY = 'circuit-bros-retry-level';
 
 export class GameOverScene extends Phaser.Scene {
   private transitioning = false;
@@ -22,7 +18,7 @@ export class GameOverScene extends Phaser.Scene {
     this.add.text(480, 132, 'Magic smoke detected!', { fontFamily: 'monospace', fontSize: '42px', color: '#ff3e5f' }).setOrigin(0.5);
     this.add.text(480, 196, data.message ?? 'Magic smoke detected.', { fontFamily: 'monospace', fontSize: '20px', color: '#ffe05d' }).setOrigin(0.5);
     this.add.text(480, 234, `Debug points: ${data.score ?? 0}`, { fontFamily: 'monospace', fontSize: '22px', color: '#f7fff7' }).setOrigin(0.5);
-    const level = Phaser.Math.Clamp(data.level ?? 1, 1, LEVEL_SCENES.length);
+    const level = Phaser.Math.Clamp(data.level ?? 1, 1, 4);
     new Button(this, 480, 300, 'Retry', () => this.retryLevel(level));
     new Button(this, 480, 360, 'Level Select', () => this.transitionTo('LevelSelectScene'));
     new Button(this, 480, 420, 'Main Menu', () => this.transitionTo('MainMenuScene'));
@@ -36,6 +32,14 @@ export class GameOverScene extends Phaser.Scene {
     this.input.keyboard!.once('keydown-SPACE', () => this.retryLevel(level));
     this.input.keyboard!.once('keydown-L', () => this.transitionTo('LevelSelectScene'));
     this.input.keyboard!.once('keydown-M', () => this.transitionTo('MainMenuScene'));
+
+    // Scene-level fallback in case a stale interactive zone consumes the
+    // object-specific event. Coordinates are in the fixed 960x540 game space.
+    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      if (pointer.x >= 332 && pointer.x <= 628 && pointer.y >= 268 && pointer.y <= 332) {
+        this.retryLevel(level);
+      }
+    });
   }
 
   private transitionTo(target: string): void {
@@ -43,16 +47,17 @@ export class GameOverScene extends Phaser.Scene {
   }
 
   private retryLevel(level: number): void {
-    const key = `Level${level}Scene`;
-    const LevelScene = LEVEL_SCENES[level - 1];
-    this.queueTransition(() => {
-      // Phaser normally reuses the original Scene instance after stop/start.
-      // A failed Arcade world can retain plugin state even after shutdown, so
-      // Retry discards it and installs a completely fresh level scene.
-      this.scene.remove(key);
-      this.scene.add(key, LevelScene, true);
-      this.scene.stop();
-    });
+    if (this.transitioning) return;
+    this.transitioning = true;
+    try {
+      sessionStorage.setItem(RETRY_LEVEL_KEY, String(level));
+      // A full runtime reset guarantees that no damaged Phaser scene, physics,
+      // timer, input, or WebGL state survives the failed attempt.
+      window.location.reload();
+    } catch {
+      this.transitioning = false;
+      this.transitionTo(`Level${level}Scene`);
+    }
   }
 
   private queueTransition(action: () => void): void {
