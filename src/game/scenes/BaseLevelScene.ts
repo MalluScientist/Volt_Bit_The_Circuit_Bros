@@ -161,15 +161,15 @@ export abstract class BaseLevelScene extends Phaser.Scene {
 
   private drawTutorialStrip(): void {
     const y = 96;
-    const panel = this.add.rectangle(300, y, 430, 54, 0x07131b, 0.78).setStrokeStyle(2, 0x45c4ff, 0.55).setScrollFactor(0).setDepth(80);
-    const coin = this.add.sprite(118, y, 'coin').setTint(0xffe05d).setScrollFactor(0).setDepth(81);
-    const chip = this.add.sprite(188, y, 'chip').setTint(0x45c4ff).setScrollFactor(0).setDepth(81);
-    const cell = this.add.sprite(258, y, 'cell').setTint(0x77ff4f).setScrollFactor(0).setDepth(81);
-    const safe = this.add.text(98, y + 22, 'COLLECT', { fontFamily: 'monospace', fontSize: '12px', color: '#77ff4f' }).setScrollFactor(0).setDepth(81);
-    const danger = this.add.rectangle(390, y, 42, 18, 0xff3e5f, 0.8).setStrokeStyle(2, 0xffa33a).setScrollFactor(0).setDepth(81);
-    const spike = this.add.triangle(464, y + 10, 0, 18, 14, 0, 28, 18, 0xff6b2a, 0.9).setScrollFactor(0).setDepth(81);
-    const avoid = this.add.text(358, y + 22, 'AVOID', { fontFamily: 'monospace', fontSize: '12px', color: '#ff9d5d' }).setScrollFactor(0).setDepth(81);
-    this.time.delayedCall(5200, () => [panel, coin, chip, cell, safe, danger, spike, avoid].forEach((obj) => obj.destroy()));
+    const panel = this.add.rectangle(300, y, 392, 46, 0x07131b, 0.62).setStrokeStyle(1, 0x45c4ff, 0.42).setScrollFactor(0).setDepth(80);
+    const safeLabel = this.add.text(112, y - 17, 'PICKUPS', { fontFamily: 'monospace', fontSize: '11px', color: '#9bd7e8' }).setScrollFactor(0).setDepth(81);
+    const coin = this.add.sprite(142, y + 4, 'coin').setTint(0xffe05d).setScrollFactor(0).setDepth(81);
+    const chip = this.add.sprite(190, y + 4, 'chip').setTint(0x45c4ff).setScrollFactor(0).setDepth(81);
+    const cell = this.add.sprite(238, y + 4, 'cell').setTint(0x77ff4f).setScrollFactor(0).setDepth(81);
+    const avoidLabel = this.add.text(342, y - 17, 'DANGER', { fontFamily: 'monospace', fontSize: '11px', color: '#ff9d5d' }).setScrollFactor(0).setDepth(81);
+    const spark = this.add.rectangle(370, y + 3, 42, 16, 0xff3e5f, 0.82).setStrokeStyle(1, 0x07131b).setScrollFactor(0).setDepth(81);
+    const spike = this.add.triangle(434, y + 12, 0, 18, 14, 0, 28, 18, 0xff6b2a, 0.9).setScrollFactor(0).setDepth(81);
+    this.time.delayedCall(5200, () => [panel, safeLabel, coin, chip, cell, avoidLabel, spark, spike].forEach((obj) => obj.destroy()));
   }
 
   private drawBackground(): void {
