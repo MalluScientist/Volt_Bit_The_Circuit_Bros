@@ -26,15 +26,17 @@ export class TouchControls {
     if (!enabled) return;
 
     const settings = SaveSystem.load().settings;
-    const scale = Phaser.Math.Clamp(settings.touchSize, 0.85, 1.35);
+    // Keep the user's size preference while capping it at a value that cannot
+    // make neighboring controls overlap inside the fixed 960x540 playfield.
+    const scale = Phaser.Math.Clamp(settings.touchSize, 0.85, 1.15);
     const opacity = Phaser.Math.Clamp(settings.touchOpacity, 0.35, 0.95);
     const leftActions = settings.leftHandedTouch;
-    const moveX = leftActions ? 726 : 58;
-    const moveX2 = leftActions ? 824 : 156;
-    const actionX = leftActions ? 88 : 664;
-    const attackX = leftActions ? 198 : 774;
-    const dashX = leftActions ? 296 : 872;
-    const beamX = leftActions ? 296 : 872;
+    const moveX = leftActions ? 760 : 62;
+    const moveX2 = leftActions ? 860 : 160;
+    const actionX = leftActions ? 90 : 660;
+    const attackX = leftActions ? 190 : 760;
+    const dashX = leftActions ? 300 : 870;
+    const beamX = dashX;
 
     scene.input.topOnly = false;
     scene.input.addPointer(6);
@@ -47,19 +49,20 @@ export class TouchControls {
       this.releaseAll();
     });
 
-    this.holdButton(scene, moveX, 470, '<', 72 * scale, 52 * scale, 118 * scale, 96 * scale, opacity, () => callbacks.moveLeft(true), () => callbacks.moveLeft(false));
-    this.holdButton(scene, moveX2, 470, '>', 72 * scale, 52 * scale, 118 * scale, 96 * scale, opacity, () => callbacks.moveRight(true), () => callbacks.moveRight(false));
-    this.holdButton(scene, actionX, 470, 'JUMP', 88 * scale, 56 * scale, 136 * scale, 100 * scale, opacity, () => callbacks.jump(true), () => callbacks.jump(false));
-    this.tapButton(scene, attackX, 470, 'ATK', 76 * scale, 54 * scale, 118 * scale, 96 * scale, opacity, callbacks.attack);
-    const dashVisual = this.tapButton(scene, dashX, 470, 'DASH', 98 * scale, 64 * scale, 142 * scale, 112 * scale, opacity, callbacks.dash);
+    const bottomY = 480;
+    this.holdButton(scene, moveX, bottomY, '<', 64 * scale, 48 * scale, 82 * scale, 74 * scale, opacity, () => callbacks.moveLeft(true), () => callbacks.moveLeft(false));
+    this.holdButton(scene, moveX2, bottomY, '>', 64 * scale, 48 * scale, 82 * scale, 74 * scale, opacity, () => callbacks.moveRight(true), () => callbacks.moveRight(false));
+    this.holdButton(scene, actionX, bottomY, 'JUMP', 78 * scale, 50 * scale, 90 * scale, 76 * scale, opacity, () => callbacks.jump(true), () => callbacks.jump(false));
+    this.tapButton(scene, attackX, bottomY, 'ATK', 70 * scale, 48 * scale, 82 * scale, 74 * scale, opacity, callbacks.attack);
+    const dashVisual = this.tapButton(scene, dashX, bottomY, 'DASH', 88 * scale, 54 * scale, 96 * scale, 78 * scale, opacity, callbacks.dash);
     scene.events.on(Phaser.Scenes.Events.UPDATE, () => {
       const ready = callbacks.dashReady?.() ?? false;
       dashVisual.bg.setStrokeStyle(ready ? 3 : 2, ready ? 0x77ff4f : 0x45c4ff, ready ? 0.95 : 0.82);
       dashVisual.root.setScale(ready ? 1.06 : 1);
       dashVisual.label.setColor(ready ? '#77ff4f' : '#f7fff7');
     });
-    this.tapButton(scene, beamX, 382, 'BEAM', 82 * scale, 48 * scale, 122 * scale, 84 * scale, opacity, callbacks.beam);
-    this.tapButton(scene, 914, 46, 'II', 54 * scale, 42 * scale, 82 * scale, 70 * scale, opacity, callbacks.pause);
+    this.tapButton(scene, beamX, 390, 'BEAM', 76 * scale, 42 * scale, 88 * scale, 68 * scale, opacity, callbacks.beam);
+    this.tapButton(scene, 922, 34, 'II', 42 * scale, 34 * scale, 60 * scale, 52 * scale, opacity, callbacks.pause);
   }
 
   private holdButton(scene: Phaser.Scene, x: number, y: number, label: string, width: number, height: number, hitWidth: number, hitHeight: number, opacity: number, onDown: () => void, onUp: () => void): void {
