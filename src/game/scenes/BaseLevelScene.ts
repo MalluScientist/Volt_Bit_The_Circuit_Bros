@@ -59,6 +59,8 @@ export abstract class BaseLevelScene extends Phaser.Scene {
   private character!: CharacterConfig;
   private bossPhaseText?: Phaser.GameObjects.Text;
   private bossPhase = 1;
+  private bossHealth = 0;
+  private bossMaxHealth = 0;
   private attempt = 1;
 
   create(): void {
@@ -116,6 +118,8 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     this.completingLevel = false;
     this.chips = 0;
     this.bossPhase = 1;
+    this.bossHealth = 0;
+    this.bossMaxHealth = 0;
     this.bossPhaseText = undefined;
   }
 
@@ -301,6 +305,8 @@ export abstract class BaseLevelScene extends Phaser.Scene {
       this.beamBoss(beam as Phaser.GameObjects.Rectangle);
     });
     this.physics.add.overlap(this.player, this.boss, () => this.touchBoss());
+    this.bossHealth = this.boss.health;
+    this.bossMaxHealth = this.boss.maxHealth;
     this.audio.boss();
     this.showBossTitle(this.boss.title);
     this.bossBarBack = this.add.rectangle(480, 60, 360, 16, 0x102530).setScrollFactor(0).setDepth(100).setStrokeStyle(2, 0xf7fff7);
@@ -359,15 +365,17 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     if (cooldownMs > 0 && this.time.now - this.lastBossHitAt < cooldownMs) return false;
     this.lastBossHitAt = this.time.now;
     const finalDamage = this.player.powerUp === 'Solder Sword' && source !== 'beam' ? Math.max(this.player.character.attackDamage + 1, damage) : damage;
-    const beforeHealth = this.boss.health;
-    const defeated = this.boss.takeDamage(finalDamage, source);
+    const previousHealth = this.bossHealth > 0 ? this.bossHealth : this.boss.health;
+    const nextHealth = Phaser.Math.Clamp(previousHealth - finalDamage, 0, this.bossMaxHealth || this.boss.maxHealth);
+    const actualDamage = previousHealth - nextHealth;
+    if (actualDamage <= 0) return false;
+    this.bossHealth = nextHealth;
+    this.boss.health = previousHealth;
+    const defeated = this.boss.takeDamage(actualDamage, source);
+    this.boss.health = this.bossHealth;
     this.audio.bossHit();
     this.updateBossBar();
-    if (source === 'beam' && this.boss.active && this.boss.health >= beforeHealth) {
-      this.boss.health = Phaser.Math.Clamp(beforeHealth - finalDamage, 0, this.boss.maxHealth);
-      this.updateBossBar();
-    }
-    if (defeated || this.boss.health <= 0) {
+    if (defeated || this.bossHealth <= 0) {
       this.boss.defeated = true;
       this.audio.bossDefeat();
       this.player.score += 1000;
@@ -424,10 +432,13 @@ export abstract class BaseLevelScene extends Phaser.Scene {
 
   private updateBossBar(): void {
     if (!this.boss || !this.bossBar) return;
-    const ratio = Phaser.Math.Clamp(this.boss.health / this.boss.maxHealth, 0, 1);
+    const maxHealth = this.bossMaxHealth || this.boss.maxHealth;
+    const health = this.bossHealth > 0 || this.boss.defeated ? this.bossHealth : this.boss.health;
+    this.boss.health = health;
+    const ratio = Phaser.Math.Clamp(health / maxHealth, 0, 1);
     this.bossBar.setScale(1, 1);
     this.bossBar.width = Math.max(0, BOSS_BAR_WIDTH * ratio);
-    this.bossHpText?.setText(`${this.boss.health}/${this.boss.maxHealth}`);
+    this.bossHpText?.setText(`${health}/${maxHealth}`);
     const phase = ratio <= 1 / 3 ? 3 : ratio <= 2 / 3 ? 2 : 1;
     if (phase !== this.bossPhase) {
       this.bossPhase = phase;
@@ -482,6 +493,8 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     this.bossHpText = undefined;
     this.bossPhaseText?.destroy();
     this.bossPhaseText = undefined;
+    this.bossHealth = 0;
+    this.bossMaxHealth = 0;
     this.resetBossObjects();
   }
 
