@@ -4,6 +4,7 @@ export class Button extends Phaser.GameObjects.Container {
   constructor(scene: Phaser.Scene, x: number, y: number, text: string, onClick: () => void, width = 260, fontSize = '20px') {
     super(scene, x, y);
     this.setDepth(5);
+    this.setSize(width + 36, 64);
     const bg = scene.add.rectangle(0, 0, width, 44, 0x12242d, 0.96).setStrokeStyle(2, 0x45c4ff);
     const label = scene.add.text(0, 0, text, {
       fontFamily: 'monospace',
@@ -12,8 +13,12 @@ export class Button extends Phaser.GameObjects.Container {
     }).setOrigin(0.5);
     this.add([bg, label]);
     scene.add.existing(this);
+    this.setInteractive(
+      new Phaser.Geom.Rectangle(-(width + 36) / 2, -32, width + 36, 64),
+      Phaser.Geom.Rectangle.Contains
+    );
 
-    const zone = scene.add.zone(x, y, width + 36, 64).setDepth(6).setInteractive({ useHandCursor: true });
+    let clicked = false;
     const setNormal = () => {
       bg.setFillStyle(0x12242d);
       bg.setStrokeStyle(2, 0x45c4ff);
@@ -25,14 +30,16 @@ export class Button extends Phaser.GameObjects.Container {
       this.setScale(0.98);
     };
 
-    zone.on('pointerover', setActive);
-    zone.on('pointerout', setNormal);
-    zone.on('pointerdown', setActive);
-    zone.on('pointerup', () => {
+    this.on('pointerover', setActive);
+    this.on('pointerout', setNormal);
+    this.on('pointerdown', setActive);
+    this.on('pointerup', () => {
+      if (clicked) return;
+      clicked = true;
       setNormal();
       onClick();
     });
-    zone.on('pointerupoutside', setNormal);
-    zone.on('pointercancel', setNormal);
+    this.on('pointerupoutside', setNormal);
+    this.on('pointercancel', setNormal);
   }
 }

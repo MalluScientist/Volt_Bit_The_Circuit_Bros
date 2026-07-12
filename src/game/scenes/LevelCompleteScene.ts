@@ -16,8 +16,8 @@ export class LevelCompleteScene extends Phaser.Scene {
     const save = SaveSystem.load();
     const level = getCampaignLevel(data.level);
     const nextLevel = getCampaignLevel(data.level + 1);
-    this.add.text(480, 78, 'Continuity restored!', { fontFamily: 'monospace', fontSize: '40px', color: '#77ff4f' }).setOrigin(0.5);
-    this.add.text(480, 176, [
+    this.add.text(480, 54, 'Continuity restored!', { fontFamily: 'monospace', fontSize: '32px', color: '#77ff4f' }).setOrigin(0.5);
+    this.add.text(480, 170, [
       data.levelName ?? `Level ${data.level}: ${level.name}`,
       `Hero: ${data.characterName ?? 'Circuit Bro'}`,
       `Debug points: ${data.score}`,
@@ -29,15 +29,15 @@ export class LevelCompleteScene extends Phaser.Scene {
       'Root cause analysis pending.'
     ].filter(Boolean).join('\n'), {
       fontFamily: 'monospace',
-      fontSize: '19px',
+      fontSize: '16px',
       color: '#f7fff7',
       align: 'center',
-      lineSpacing: 7
+      lineSpacing: 5
     }).setOrigin(0.5);
-    if (nextLevel.implemented && nextLevel.sceneKey) new Button(this, 480, 356, 'Continue', () => this.scene.start(nextLevel.sceneKey));
-    else new Button(this, 480, 356, 'Level Select', () => this.scene.start('LevelSelectScene'));
-    new Button(this, 300, 424, 'Retry', () => this.scene.start(`Level${data.level}Scene`), 190);
-    new Button(this, 660, 424, 'Level Select', () => this.scene.start('LevelSelectScene'), 230);
-    new Button(this, 480, 486, 'Main Menu', () => this.scene.start('MainMenuScene'), 210);
+    if (nextLevel.implemented && nextLevel.sceneKey) new Button(this, 480, 334, 'Continue', () => this.scene.start(nextLevel.sceneKey));
+    else new Button(this, 480, 334, 'Level Select', () => this.scene.start('LevelSelectScene'));
+    new Button(this, 300, 402, 'Retry', () => this.scene.start(`Level${data.level}Scene`), 190);
+    new Button(this, 660, 402, 'Level Select', () => this.scene.start('LevelSelectScene'), 230);
+    new Button(this, 480, 470, 'Main Menu', () => this.scene.start('MainMenuScene'), 210);
   }
 }
