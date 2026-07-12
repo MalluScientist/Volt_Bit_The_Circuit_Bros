@@ -86,7 +86,6 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     this.traps = new TrapManager(this, this.player, this.spec.traps, {
       toast: (message) => this.toast.show(message)
     });
-    if (this.levelId === 1) this.drawTutorialStrip();
     new TouchControls(this, {
       moveLeft: (active) => this.player.setTouchMove('left', active),
       moveRight: (active) => this.player.setTouchMove('right', active),
@@ -157,19 +156,6 @@ export abstract class BaseLevelScene extends Phaser.Scene {
       powerUp: this.player.powerUp,
       chips: this.chips
     });
-  }
-
-  private drawTutorialStrip(): void {
-    const y = 96;
-    const panel = this.add.rectangle(300, y, 392, 46, 0x07131b, 0.62).setStrokeStyle(1, 0x45c4ff, 0.42).setScrollFactor(0).setDepth(80);
-    const safeLabel = this.add.text(112, y - 17, 'PICKUPS', { fontFamily: 'monospace', fontSize: '11px', color: '#9bd7e8' }).setScrollFactor(0).setDepth(81);
-    const coin = this.add.sprite(142, y + 4, 'coin').setTint(0xffe05d).setScrollFactor(0).setDepth(81);
-    const chip = this.add.sprite(190, y + 4, 'chip').setTint(0x45c4ff).setScrollFactor(0).setDepth(81);
-    const cell = this.add.sprite(238, y + 4, 'cell').setTint(0x77ff4f).setScrollFactor(0).setDepth(81);
-    const avoidLabel = this.add.text(342, y - 17, 'DANGER', { fontFamily: 'monospace', fontSize: '11px', color: '#ff9d5d' }).setScrollFactor(0).setDepth(81);
-    const spark = this.add.rectangle(370, y + 3, 42, 16, 0xff3e5f, 0.82).setStrokeStyle(1, 0x07131b).setScrollFactor(0).setDepth(81);
-    const spike = this.add.triangle(434, y + 12, 0, 18, 14, 0, 28, 18, 0xff6b2a, 0.9).setScrollFactor(0).setDepth(81);
-    this.time.delayedCall(5200, () => [panel, safeLabel, coin, chip, cell, avoidLabel, spark, spike].forEach((obj) => obj.destroy()));
   }
 
   private drawBackground(): void {
