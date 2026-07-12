@@ -59,8 +59,6 @@ export abstract class BaseLevelScene extends Phaser.Scene {
   private character!: CharacterConfig;
   private bossPhaseText?: Phaser.GameObjects.Text;
   private bossPhase = 1;
-  private bossHealth = 0;
-  private bossMaxHealth = 0;
   private gameOverPending = false;
   private attempt = 1;
 
@@ -125,8 +123,6 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     this.completingLevel = false;
     this.chips = 0;
     this.bossPhase = 1;
-    this.bossHealth = 0;
-    this.bossMaxHealth = 0;
     this.gameOverPending = false;
     this.bossPhaseText = undefined;
   }
@@ -138,6 +134,7 @@ export abstract class BaseLevelScene extends Phaser.Scene {
       if (child.active) (child as Enemy).tick(time, this.player);
       return true;
     });
+    this.processEnemyBeamHits();
     if (!this.bossStarted && this.player.x > this.spec.bossArenaX) this.startBoss();
     if (this.boss?.active && !this.boss.defeated) {
       this.boss.tick(time, this.player);
@@ -268,9 +265,27 @@ export abstract class BaseLevelScene extends Phaser.Scene {
   }
 
   private beamEnemy(beam: Phaser.GameObjects.Rectangle, enemy: Enemy): void {
+    if (!beam.active || beam.getData('spent') || !enemy.active) return;
+    beam.setData('spent', true);
     const defeated = enemy.hurt(Number(beam.getData('damage') ?? 2));
     if (defeated) this.player.score += enemy.scoreValue;
     beam.destroy();
+  }
+
+  private processEnemyBeamHits(): void {
+    this.playerBeams.children.each((child) => {
+      const beam = child as Phaser.GameObjects.Rectangle;
+      if (!beam.active || beam.getData('spent')) return true;
+      const swept = this.beamSweptBounds(beam);
+      this.enemies.children.each((enemyChild) => {
+        const enemy = enemyChild as Enemy;
+        if (beam.active && enemy.active && Phaser.Geom.Intersects.RectangleToRectangle(swept, enemy.getBounds())) {
+          this.beamEnemy(beam, enemy);
+        }
+        return beam.active;
+      });
+      return true;
+    });
   }
 
   private hitHazard(hazard: Hazard): void {
@@ -313,8 +328,6 @@ export abstract class BaseLevelScene extends Phaser.Scene {
       this.beamBoss(beam as Phaser.GameObjects.Rectangle);
     });
     this.physics.add.overlap(this.player, this.boss, () => this.touchBoss());
-    this.bossHealth = this.boss.health;
-    this.bossMaxHealth = this.boss.maxHealth;
     this.audio.boss();
     this.showBossTitle(this.boss.title);
     this.bossBarBack = this.add.rectangle(480, 60, 360, 16, 0x102530).setScrollFactor(0).setDepth(100).setStrokeStyle(2, 0xf7fff7);
@@ -361,7 +374,20 @@ export abstract class BaseLevelScene extends Phaser.Scene {
   private beamIntersectsBoss(beam: Phaser.GameObjects.Rectangle): boolean {
     if (!this.boss?.active) return false;
     if (this.physics.overlap(beam, this.boss)) return true;
-    return Phaser.Geom.Intersects.RectangleToRectangle(beam.getBounds(), this.boss.getBounds());
+    return Phaser.Geom.Intersects.RectangleToRectangle(this.beamSweptBounds(beam), this.boss.getBounds());
+  }
+
+  private beamSweptBounds(beam: Phaser.GameObjects.Rectangle): Phaser.Geom.Rectangle {
+    const current = beam.getBounds();
+    const body = beam.body as Phaser.Physics.Arcade.Body;
+    const dx = body.x - body.prev.x;
+    const dy = body.y - body.prev.y;
+    return new Phaser.Geom.Rectangle(
+      Math.min(current.x, current.x - dx),
+      Math.min(current.y, current.y - dy),
+      current.width + Math.abs(dx),
+      current.height + Math.abs(dy)
+    );
   }
 
   private hitBoss(damage = 1, source: 'melee' | 'beam' | 'dash' | 'stomp' | 'hazard' | 'debug' = 'melee', cooldownMs = 260): boolean {
@@ -373,18 +399,12 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     if (cooldownMs > 0 && this.time.now - this.lastBossHitAt < cooldownMs) return false;
     this.lastBossHitAt = this.time.now;
     const finalDamage = this.player.powerUp === 'Solder Sword' && source !== 'beam' ? Math.max(this.player.character.attackDamage + 1, damage) : damage;
-    const previousHealth = this.bossHealth > 0 ? this.bossHealth : this.boss.health;
-    const nextHealth = Phaser.Math.Clamp(previousHealth - finalDamage, 0, this.bossMaxHealth || this.boss.maxHealth);
-    const actualDamage = previousHealth - nextHealth;
-    if (actualDamage <= 0) return false;
-    this.bossHealth = nextHealth;
-    this.boss.health = previousHealth;
-    const defeated = this.boss.takeDamage(actualDamage, source);
-    this.boss.health = this.bossHealth;
+    const previousHealth = this.boss.health;
+    const defeated = this.boss.takeDamage(finalDamage, source);
+    if (this.boss.health >= previousHealth) return false;
     this.audio.bossHit();
     this.updateBossBar();
-    if (defeated || this.bossHealth <= 0) {
-      this.boss.defeated = true;
+    if (defeated) {
       this.audio.bossDefeat();
       this.player.score += 1000;
       this.bossBar?.destroy();
@@ -440,14 +460,11 @@ export abstract class BaseLevelScene extends Phaser.Scene {
 
   private updateBossBar(): void {
     if (!this.boss || !this.bossBar) return;
-    const maxHealth = this.bossMaxHealth || this.boss.maxHealth;
-    const health = this.bossHealth > 0 || this.boss.defeated ? this.bossHealth : this.boss.health;
-    this.boss.health = health;
-    const ratio = Phaser.Math.Clamp(health / maxHealth, 0, 1);
+    const ratio = Phaser.Math.Clamp(this.boss.health / this.boss.maxHealth, 0, 1);
     this.bossBar.clear();
     this.bossBar.fillStyle(0xff3e5f, 1);
     this.bossBar.fillRect(300, 55, Math.max(0, BOSS_BAR_WIDTH * ratio), 10);
-    this.bossHpText?.setText(`${health}/${maxHealth}`);
+    this.bossHpText?.setText(`${this.boss.health}/${this.boss.maxHealth}`);
     const phase = ratio <= 1 / 3 ? 3 : ratio <= 2 / 3 ? 2 : 1;
     if (phase !== this.bossPhase) {
       this.bossPhase = phase;
@@ -532,8 +549,6 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     this.bossHpText = undefined;
     this.bossPhaseText?.destroy();
     this.bossPhaseText = undefined;
-    this.bossHealth = 0;
-    this.bossMaxHealth = 0;
     this.resetBossObjects();
   }
 
