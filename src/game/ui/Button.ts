@@ -38,6 +38,9 @@ export class Button extends Phaser.GameObjects.Container {
       clicked = true;
       setNormal();
       onClick();
+      scene.time.delayedCall(260, () => {
+        clicked = false;
+      });
     });
     this.on('pointerupoutside', setNormal);
     this.on('pointercancel', setNormal);

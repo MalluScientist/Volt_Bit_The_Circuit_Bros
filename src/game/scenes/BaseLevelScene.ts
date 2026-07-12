@@ -201,7 +201,7 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.collectibles, (_, item) => this.collect(item as Collectible));
     this.physics.add.overlap(this.player, this.hazards, (_, hazard) => this.hitHazard(hazard as Hazard));
     this.physics.add.overlap(this.player, this.checkpoint, () => {
-      this.checkpoint.activate();
+      if (!this.checkpoint.activate()) return;
       this.player.checkpoint.copy(this.spec.checkpoint);
       if (SaveSystem.load().upgrades.checkpointReboot) this.player.heal(1);
       this.toast.show('Checkpoint saved. Try not to explode.');

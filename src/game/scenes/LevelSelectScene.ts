@@ -5,6 +5,8 @@ import { getCharacterConfig } from '../characters';
 import { ProgressionSystem, LevelProgress } from '../systems/ProgressionSystem';
 
 export class LevelSelectScene extends Phaser.Scene {
+  private lockedMessage?: Phaser.GameObjects.Text;
+
   constructor() {
     super('LevelSelectScene');
   }
@@ -20,14 +22,14 @@ export class LevelSelectScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     ProgressionSystem.levelProgress(save).forEach((progress, index) => {
-      const label = `${progress.level.id}. ${progress.level.shortName}  ${progress.stateLabel}  ${progress.chips}/3`;
-      const x = index < 5 ? 260 : 700;
+      const label = `${progress.level.id}. ${progress.level.shortName} ${progress.stateLabel} ${progress.chips}/3`;
+      const x = index < 5 ? 240 : 720;
       const y = 138 + (index % 5) * 58;
       const play = () => {
         if (progress.level.implemented && progress.unlocked && progress.level.sceneKey) this.scene.start(progress.level.sceneKey);
         else this.showLocked(progress);
       };
-      new Button(this, x, y, label, play, 360, '15px');
+      new Button(this, x, y, label, play, 330, '13px');
     });
     new Button(this, 300, 486, 'Change Character', () => this.scene.start('CharacterSelectScene', { nextScene: 'LevelSelectScene' }), 260);
     new Button(this, 660, 486, 'Back', () => this.scene.start('MainMenuScene'), 180);
@@ -35,12 +37,14 @@ export class LevelSelectScene extends Phaser.Scene {
 
   private showLocked(progress: LevelProgress): void {
     const message = ProgressionSystem.lockedMessage(progress);
-    this.add.text(480, 526, message, {
+    this.lockedMessage?.destroy();
+    this.lockedMessage = this.add.text(480, 526, message, {
       fontFamily: 'monospace',
-      fontSize: '15px',
+      fontSize: '14px',
       color: '#ffe05d',
       backgroundColor: '#102530cc',
-      padding: { x: 10, y: 6 }
+      padding: { x: 10, y: 6 },
+      wordWrap: { width: 760 }
     }).setOrigin(0.5).setDepth(20);
   }
 }

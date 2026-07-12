@@ -72,7 +72,7 @@ export class TrapManager {
       cracks.lineBetween(spec.x - 18, spec.y - 20, spec.x + 4, spec.y - 4);
       cracks.lineBetween(spec.x + 4, spec.y - 4, spec.x - 8, spec.y + 18);
       cracks.lineBetween(spec.x + 8, spec.y - 22, spec.x + 20, spec.y + 16);
-      this.scene.physics.add.collider(this.player, block, () => {
+      this.scene.physics.add.overlap(this.player, block, () => {
         if (this.player.isDashing) this.breakDashBlock(trap, block, cracks);
       });
       this.scene.tweens.add({ targets: block, alpha: 0.72, yoyo: true, repeat: -1, duration: 560 });
@@ -109,11 +109,7 @@ export class TrapManager {
     trap.spent = true;
     const { spec } = trap;
     if (spec.type === 'breakTrace' || spec.type === 'glitchPlatform' || spec.type === 'dropSocket') {
-      trap.objects.forEach((obj) => {
-        const body = (obj as Phaser.GameObjects.GameObject).body as Phaser.Physics.Arcade.StaticBody | undefined;
-        if (body) body.enable = false;
-        if (obj.active) obj.destroy();
-      });
+      this.spawnHazard(spec.x, spec.y, spec.width ?? 110, spec.height ?? 22, TRAP_MESSAGES[spec.type], 520);
       this.callbacks.toast(TRAP_MESSAGES[spec.type]);
       return;
     }

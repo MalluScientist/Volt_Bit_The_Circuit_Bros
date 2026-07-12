@@ -10,9 +10,10 @@ export class Checkpoint extends Phaser.Physics.Arcade.Sprite {
     (this.body as Phaser.Physics.Arcade.Body).setAllowGravity(false);
   }
 
-  activate(): void {
-    if (this.activated) return;
+  activate(): boolean {
+    if (this.activated) return false;
     this.activated = true;
     this.setTint(0xffe05d);
+    return true;
   }
 }

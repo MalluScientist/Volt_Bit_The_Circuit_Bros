@@ -152,9 +152,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   restartAtCheckpoint(): void {
+    const body = this.body as Phaser.Physics.Arcade.Body;
     this.setPosition(this.checkpoint.x, this.checkpoint.y);
     this.setVelocity(0, 0);
+    this.isDashing = false;
+    body.setAllowGravity(true);
+    body.setAcceleration(0, 0);
     this.health = Math.max(1, this.health);
+    this.invulnerableUntil = this.scene.time.now + 900;
   }
 
   setTouchMove(direction: 'left' | 'right', active: boolean): void {
