@@ -65,8 +65,14 @@ export abstract class BaseLevelScene extends Phaser.Scene {
 
   create(): void {
     this.resetSceneState();
+    // A level scene can be restarted after its physics world was paused by a
+    // pause, death, or completion transition. Phaser retains that paused flag
+    // on the scene plugin, so always restore a playable world on entry.
+    this.physics.resume();
+    this.input.enabled = true;
     this.spec = makeLevel(this.levelId);
     this.attempt = SaveSystem.recordAttempt(this.levelId);
+    this.chips = Phaser.Math.Clamp(SaveSystem.getDebugChipCount(this.levelId), 0, 3);
     this.character = getCharacterConfig(SaveSystem.selectedCharacter());
     this.physics.world.setBounds(0, 0, this.spec.width, GAME_HEIGHT + 220);
     this.cameras.main.setBounds(0, 0, this.spec.width, GAME_HEIGHT);
@@ -474,8 +480,22 @@ export abstract class BaseLevelScene extends Phaser.Scene {
   }
 
   private retryFromCheckpoint(): void {
+    if (this.paused) {
+      this.paused = false;
+      this.pausePanel?.destroy();
+      this.pausePanel = undefined;
+      this.physics.resume();
+    }
     this.resetBossEncounter();
+    this.resetPlayerBeams();
     this.player.restartAtCheckpoint();
+  }
+
+  private resetPlayerBeams(): void {
+    this.playerBeams?.children.each((child) => {
+      if (child.active) child.destroy();
+      return true;
+    });
   }
 
   private resetBossEncounter(): void {

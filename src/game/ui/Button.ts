@@ -24,16 +24,31 @@ export class Button extends Phaser.GameObjects.Container {
       bg.setStrokeStyle(2, 0xffe05d);
       this.setScale(0.98);
     };
+    let clicked = false;
+    const activate = () => {
+      if (clicked) return;
+      clicked = true;
+      setNormal();
+      onClick();
+    };
 
     zone.on('pointerover', setActive);
     zone.on('pointerout', setNormal);
-    zone.on('pointerdown', setActive);
+    // pointerdown is more reliable than waiting for pointerup on touch after
+    // a scene transition, where Phaser may still be clearing the old pointer.
+    zone.on('pointerdown', activate);
     zone.on('pointerup', () => {
-      setNormal();
-      onClick();
+      activate();
+      clicked = false;
     });
-    zone.on('pointerupoutside', setNormal);
-    zone.on('pointercancel', setNormal);
+    zone.on('pointerupoutside', () => {
+      clicked = false;
+      setNormal();
+    });
+    zone.on('pointercancel', () => {
+      clicked = false;
+      setNormal();
+    });
     this.once(Phaser.GameObjects.Events.DESTROY, () => zone.destroy());
   }
 }

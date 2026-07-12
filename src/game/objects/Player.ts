@@ -156,6 +156,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.setPosition(this.checkpoint.x, this.checkpoint.y);
     this.setVelocity(0, 0);
     this.isDashing = false;
+    this.touchInput.left = false;
+    this.touchInput.right = false;
+    this.touchInput.jumpHeld = false;
+    this.jumpBufferedAt = -999;
+    this.attackingUntil = 0;
+    this.attackBox.setVisible(false);
+    (this.attackBox.body as Phaser.Physics.Arcade.Body).setEnable(false);
     body.setAllowGravity(true);
     body.setAcceleration(0, 0);
     this.health = Math.max(1, this.health);
