@@ -4,7 +4,6 @@ import { AudioSystem } from '../systems/AudioSystem';
 import { makeLevel } from '../systems/LevelFactory';
 import { SaveSystem } from '../systems/SaveSystem';
 import { burst, floatingText } from '../systems/ParticleSystem';
-import { TrapManager } from '../systems/TrapManager';
 import { HUD } from '../ui/HUD';
 import { DialogToast } from '../ui/DialogToast';
 import { TouchControls } from '../ui/TouchControls';
@@ -60,7 +59,6 @@ export abstract class BaseLevelScene extends Phaser.Scene {
   private character!: CharacterConfig;
   private bossPhaseText?: Phaser.GameObjects.Text;
   private bossPhase = 1;
-  private traps?: TrapManager;
   private attempt = 1;
 
   create(): void {
@@ -83,9 +81,6 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
     this.hud = new HUD(this);
     this.toast = new DialogToast(this);
-    this.traps = new TrapManager(this, this.player, this.spec.traps, {
-      toast: (message) => this.toast.show(message)
-    });
     new TouchControls(this, {
       moveLeft: (active) => this.player.setTouchMove('left', active),
       moveRight: (active) => this.player.setTouchMove('right', active),
@@ -122,7 +117,6 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     this.chips = 0;
     this.bossPhase = 1;
     this.bossPhaseText = undefined;
-    this.traps = undefined;
   }
 
   update(time: number): void {
@@ -140,7 +134,6 @@ export abstract class BaseLevelScene extends Phaser.Scene {
       this.updateBossBar();
     }
     this.recoverBossEncounter();
-    this.traps?.update();
     this.handleWorldHazards();
     if (this.player.y > GAME_HEIGHT + 130) this.killPlayer('Gravity submitted a bug report.');
     this.hud.update({
@@ -459,7 +452,6 @@ export abstract class BaseLevelScene extends Phaser.Scene {
 
   private retryFromCheckpoint(): void {
     this.resetBossEncounter();
-    this.traps?.reset();
     this.player.restartAtCheckpoint();
   }
 

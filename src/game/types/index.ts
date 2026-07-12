@@ -78,33 +78,6 @@ export interface HazardSpec {
   h: number;
 }
 
-export type TrapType =
-  | 'breakTrace'
-  | 'popSolderSpike'
-  | 'batteryBurst'
-  | 'glitchPlatform'
-  | 'fakeExit'
-  | 'dropSocket'
-  | 'dashBreakBlock'
-  | 'movingGoal'
-  | 'suspiciousCoin';
-
-export interface TrapSpec {
-  id: string;
-  type: TrapType;
-  x: number;
-  y: number;
-  width?: number;
-  height?: number;
-  triggerX?: number;
-  triggerY?: number;
-  triggerWidth?: number;
-  triggerHeight?: number;
-  warningDelay?: number;
-  once?: boolean;
-  params?: Record<string, unknown>;
-}
-
 export interface LevelSpec {
   id: number;
   theme: LevelTheme;
@@ -116,5 +89,4 @@ export interface LevelSpec {
   enemies: SpawnSpec[];
   collectibles: CollectibleSpec[];
   hazards: HazardSpec[];
-  traps: TrapSpec[];
 }
