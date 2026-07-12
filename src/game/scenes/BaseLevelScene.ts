@@ -48,7 +48,7 @@ export abstract class BaseLevelScene extends Phaser.Scene {
   protected boss?: Boss;
   protected bossStarted = false;
   protected chips = 0;
-  private bossBar?: Phaser.GameObjects.Rectangle;
+  private bossBar?: Phaser.GameObjects.Graphics;
   private bossBarBack?: Phaser.GameObjects.Rectangle;
   private bossHpText?: Phaser.GameObjects.Text;
   private pausePanel?: Phaser.GameObjects.Container;
@@ -310,7 +310,7 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     this.audio.boss();
     this.showBossTitle(this.boss.title);
     this.bossBarBack = this.add.rectangle(480, 60, 360, 16, 0x102530).setScrollFactor(0).setDepth(100).setStrokeStyle(2, 0xf7fff7);
-    this.bossBar = this.add.rectangle(300, 60, BOSS_BAR_WIDTH, 10, 0xff3e5f).setOrigin(0, 0.5).setScrollFactor(0).setDepth(101);
+    this.bossBar = this.add.graphics().setScrollFactor(0).setDepth(101);
     this.bossHpText = this.add.text(676, 52, '', { fontFamily: 'monospace', fontSize: '13px', color: '#f7fff7' }).setScrollFactor(0).setDepth(101);
     this.bossPhase = 1;
     this.bossPhaseText = this.add.text(480, 82, 'Phase 1', { fontFamily: 'monospace', fontSize: '14px', color: '#f7fff7' }).setOrigin(0.5).setScrollFactor(0).setDepth(101);
@@ -436,8 +436,9 @@ export abstract class BaseLevelScene extends Phaser.Scene {
     const health = this.bossHealth > 0 || this.boss.defeated ? this.bossHealth : this.boss.health;
     this.boss.health = health;
     const ratio = Phaser.Math.Clamp(health / maxHealth, 0, 1);
-    this.bossBar.setScale(1, 1);
-    this.bossBar.width = Math.max(0, BOSS_BAR_WIDTH * ratio);
+    this.bossBar.clear();
+    this.bossBar.fillStyle(0xff3e5f, 1);
+    this.bossBar.fillRect(300, 55, Math.max(0, BOSS_BAR_WIDTH * ratio), 10);
     this.bossHpText?.setText(`${health}/${maxHealth}`);
     const phase = ratio <= 1 / 3 ? 3 : ratio <= 2 / 3 ? 2 : 1;
     if (phase !== this.bossPhase) {
